@@ -15,9 +15,9 @@ jobs:
       id-token: write
       contents: read
     env:
-      ACR_NAME: ${{ secrets.ACR_NAME }}
-      IMAGE_NAME: enterprise-genai-content-studio
-      IMAGE_TAG: ${{ github.event.inputs.imageTag || 'latest' }}
+      ACR_NAME: ${{ vars.ACR_NAME }}
+      IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+      IMAGE_TAG: ${{ vars.IMAGE_TAG }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,11 +57,11 @@ jobs:
       id-token: write
       contents: read
     env:
-      ACR_NAME: ${{ secrets.ACR_NAME }}
-      IMAGE_NAME: enterprise-genai-content-studio
-      IMAGE_TAG: ${{ github.event.inputs.imageTag || 'latest' }}
-      RESOURCE_GROUP: ${{ secrets.WEBAPP_RESOURCE_GROUP }}
-      WEBAPP_NAME: ${{ secrets.WEBAPP_NAME }}
+      ACR_NAME: ${{ vars.ACR_NAME }}
+      IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+      IMAGE_TAG: ${{ vars.IMAGE_TAG }}
+      RESOURCE_GROUP: ${{ vars.RESOURCE_GROUP }}
+      WEBAPP_NAME: ${{ vars.WEBAPP_NAME }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
