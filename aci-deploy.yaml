@@ -1,0 +1,74 @@
+apiVersion: '2021-09-01'
+name: gpt-api-container
+properties:
+  containers:
+  - name: gpt-api
+    properties:
+      image: gptacr2025.azurecr.io/gpt-api:latest
+      resources:
+        requests:
+          cpu: 1.0
+          memoryInGb: 2.0
+      ports:
+      - port: 8000
+        protocol: TCP
+      environmentVariables:
+      - name: CLOUD_PROVIDER
+        value: azure
+      - name: AZURE_AI_ENDPOINT
+        value: https://jingw0129-5070-resource.services.ai.azure.com
+      - name: AZURE_AI_PROJECT
+        value: jingw0129-5070
+      - name: AZURE_AI_API_VERSION
+        value: 2025-01-01-preview
+      - name: AZURE_OPENAI_BASE_URL
+        value: https://jingw0129-5070-resource.openai.azure.com/openai/v1
+      - name: AZURE_OPENAI_API_KEY
+        secureValue: <YOUR_AZURE_OPENAI_API_KEY>
+      - name: AZURE_SUBSCRIPTION_ID
+        value: 54eea1c8-6bc5-44b1-9cc5-3e803abfb033
+      - name: AZURE_RESOURCE_GROUP
+        value: gpt
+      - name: AZURE_AI_CHAT_DEPLOYMENT
+        value: gpt-4.1-mini
+      - name: AZURE_AI_EMBEDDING_DEPLOYMENT
+        value: text-embedding-3-large
+      - name: AZURE_AI_IMAGE_DEPLOYMENT
+        value: gpt-image-2
+      - name: AZURE_AI_VIDEO_DEPLOYMENT
+        value: sora-2
+      - name: AZURE_SEARCH_ENDPOINT
+        value: https://jingw01295070-search.search.windows.net
+      - name: AZURE_SEARCH_INDEX
+        value: enterprise-knowledge
+      - name: AZURE_SEARCH_API_KEY
+        secureValue: <YOUR_AZURE_SEARCH_API_KEY>
+      - name: AZURE_STORAGE_ACCOUNT_URL
+        value: https://jingw01295070store.blob.core.windows.net
+      - name: AZURE_STORAGE_ACCOUNT_KEY
+        secureValue: <YOUR_AZURE_STORAGE_ACCOUNT_KEY>
+      - name: AZURE_STORAGE_CONTAINER
+        value: enterprise-docs
+      - name: LOG_LEVEL
+        value: INFO
+      - name: OTEL_SERVICE_NAME
+        value: enterprise-genai-platform
+      - name: PII_DETECTION_ENABLED
+        value: 'true'
+      - name: CONTENT_SAFETY_ENABLED
+        value: 'true'
+      - name: EVAL_ENABLED
+        value: 'true'
+      - name: EVAL_SAMPLE_RATE
+        value: '0.1'
+  osType: Linux
+  ipAddress:
+    type: Public
+    ports:
+    - protocol: TCP
+      port: 8000
+  imageRegistryCredentials:
+  - server: gptacr2025.azurecr.io
+    username: gptacr2025
+    password: <YOUR_ACR_PASSWORD>
+  restartPolicy: OnFailure

@@ -1,0 +1,46 @@
+name: Manufacturing Quality Assurance
+id: manufacturing-qa
+industry: Manufacturing (Automotive Parts)
+customer_profile:
+  size: "Global manufacturer, 12 factories, 30K employees"
+  team: "5 data engineers, 2 ML engineers"
+  cloud: "GCP (Vertex AI, BigQuery)"
+  budget: "$10,000/month"
+
+problem: |
+  Quality engineers investigate 200+ defect reports per week across 12
+  factories. Each investigation requires searching through equipment manuals,
+  previous defect reports, corrective action records, and supplier quality
+  data. Average investigation time is 4 hours. 30% of defects are recurring
+  but engineers don't discover prior solutions until after reinvestigation.
+
+requirements:
+  - Multi-agent system for defect investigation
+  - Agent 1 (Knowledge): Search equipment manuals and prior defect reports
+  - Agent 2 (Analyst): Analyze defect trends and correlations
+  - Agent 3 (Recommender): Suggest corrective actions from historical data
+  - Integration with SAP QM (quality management module)
+  - Support for images (defect photos) — multimodal
+  - Multi-language (English, Mandarin, German — 3 factory regions)
+  - Offline capability for factory floor (intermittent connectivity)
+
+constraints:
+  - Equipment manuals are proprietary — cannot use public LLM APIs
+  - Some factories have limited bandwidth (1 Mbps)
+  - Must integrate with existing SAP workflow
+  - ISO 9001 audit trail required
+  - Defect data contains supplier confidential information
+
+success_metrics:
+  - Average investigation time < 1 hour (from 4 hours)
+  - Recurring defect detection rate > 80%
+  - Corrective action reuse rate > 50%
+  - Engineer satisfaction > 4.0/5.0
+
+expected_architecture:
+  pattern: "multi-agent-orchestration + rag-enterprise"
+  retrieval: "Vertex AI Search (multilingual) or Azure AI Search"
+  generation: "Gemini 2.5 Flash (multimodal for defect images)"
+  orchestration: "Custom orchestrator with 3 specialized agents"
+  special: "Edge deployment for factory floor, SAP connector"
+  estimated_cost: "$7,500/month"

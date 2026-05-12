@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enterprise GenAI Internal Console</title>
+  <style>
+    :root {
+      --bg: #eef3f7;
+      --card: #ffffff;
+      --line: #c6d9eb;
+      --text: #172434;
+      --muted: #4e6378;
+      --accent: #0b5ea7;
+      --accent-dark: #083e6d;
+      --ok: #0a875b;
+      --warn: #ab6d1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top left, #e6effb 0%, var(--bg) 45%, #edf8f4 100%);
+    }
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+    .hero {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(11, 94, 167, 0.08);
+    }
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      color: var(--accent-dark);
+      letter-spacing: 0.2px;
+    }
+    .sub {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.5;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--ok);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .links {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .links a {
+      display: inline-block;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 13px;
+      background: #fbfdff;
+    }
+    .links a:hover { text-decoration: underline; }
+    .grid {
+      margin-top: 16px;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      color: var(--accent-dark);
+      font-size: 24px;
+    }
+    .meta {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin: 10px 0 6px;
+    }
+    textarea, input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text);
+      background: #fcfefe;
+      font-family: inherit;
+    }
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      margin-top: 10px;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 13px;
+      font-size: 14px;
+      font-weight: 700;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }
+    .btn.alt { background: #4e6780; }
+    .btn.warn { background: var(--warn); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .out {
+      margin-top: 10px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      background: #f9fcff;
+      padding: 10px;
+      min-height: 120px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+      font-family: Consolas, Menlo, monospace;
+      font-size: 12px;
+    }
+    .obs-toolbar {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .obs-toolbar label {
+      margin: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .obs-config {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(160px, 1fr));
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .obs-config input {
+      width: 100%;
+      margin-top: 4px;
+      padding: 6px 8px;
+      border-radius: 8px;
+    }
+    .obs-summary {
+      margin-top: 10px;
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(2, minmax(140px, 1fr));
+    }
+    .obs-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f7fbff;
+      padding: 8px 10px;
+    }
+    .obs-card .k {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .obs-card .v {
+      margin-top: 3px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .obs-ok { border-color: rgba(10, 135, 91, 0.45); background: rgba(10, 135, 91, 0.08); }
+    .obs-warn { border-color: rgba(171, 109, 27, 0.45); background: rgba(171, 109, 27, 0.1); }
+    .obs-err { border-color: rgba(160, 41, 31, 0.45); background: rgba(160, 41, 31, 0.1); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Enterprise GenAI Internal Console</h1>
+      <p class="sub">Engineering validation view for API behavior and runtime diagnostics.</p>
+      <span class="badge">Service Ready</span>
+      <div class="links">
+        <a href="/">Customer Home</a>
+        <a href="/health">GET /health</a>
+        <a href="/skills">GET /skills</a>
+        <a href="/metrics">GET /metrics</a>
+        <a href="/docs">OpenAPI Docs</a>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Chat</h2>
+        <p class="meta">POST /chat</p>
+        <label for="chatMessage">Message</label>
+        <textarea id="chatMessage">Summarize why enterprise AI needs governance and evaluation in production.</textarea>
+        <button class="btn" id="chatBtn">Run Chat</button>
+        <div class="out" id="chatOut">Waiting...</div>
+      </article>
+
+      <article class="card">
+        <h2>Search</h2>
+        <p class="meta">POST /search</p>
+        <label for="searchQuery">Query</label>
+        <textarea id="searchQuery">Find governance pipeline patterns and policy references.</textarea>
+        <button class="btn" id="searchBtn">Run Search</button>
+        <div class="out" id="searchOut">Waiting...</div>
+      </article>
+
+      <article class="card">
+        <h2>Media Check</h2>
+        <p class="meta">POST /media/image | POST /media/video | POST /media/ppt</p>
+        <label for="mediaPrompt">Prompt / Topic</label>
+        <textarea id="mediaPrompt">Enterprise AI architecture with dual-layer guardrails and MCP tools.</textarea>
+        <div class="btn-row">
+          <button class="btn" id="imageBtn">Try Image</button>
+          <button class="btn alt" id="videoBtn">Try Video</button>
+          <button class="btn warn" id="pptBtn">Try PPT</button>
+        </div>
+        <div class="out" id="mediaOut">Waiting...</div>
+      </article>
+
+      <article class="card">
+        <h2>Observability</h2>
+        <p class="meta">Backend-only monitoring endpoints</p>
+        <div class="btn-row">
+          <button class="btn" id="obsMetricsBtn">/metrics</button>
+          <button class="btn alt" id="obsSlosBtn">/metrics/slos</button>
+          <button class="btn alt" id="obsModelsBtn">/metrics/models</button>
+          <button class="btn alt" id="obsEvalBtn">/eval/stats</button>
+          <button class="btn alt" id="obsFrictionBtn">/feedback/friction</button>
+          <button class="btn warn" id="obsDelegationBtn">/delegation/stats</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="obsRefreshAllBtn">Refresh All</button>
+        </div>
+        <div class="obs-toolbar">
+          <label for="obsAutoRefresh">
+            <input type="checkbox" id="obsAutoRefresh" />
+            Auto refresh every 30s
+          </label>
+          <span id="obsAutoRefreshState">Auto refresh: off</span>
+          <button class="btn alt" id="obsResetDefaultsBtn" style="margin-top:0;padding:6px 10px;font-size:12px;">Reset to Defaults</button>
+        </div>
+        <div class="obs-config">
+          <div>
+            <label for="obsSloFailThreshold">SLO failure threshold</label>
+            <input id="obsSloFailThreshold" type="number" min="0" value="0" />
+          </div>
+          <div>
+            <label for="obsFrictionWarnThreshold">Friction warn threshold</label>
+            <input id="obsFrictionWarnThreshold" type="number" min="0" value="1" />
+          </div>
+          <div>
+            <label for="obsPinHighRisk">Pin high risk to top</label>
+            <input id="obsPinHighRisk" type="checkbox" checked style="width:auto;margin-top:8px;" />
+          </div>
+        </div>
+        <div class="obs-summary" id="obsSummary"></div>
+        <div class="out" id="obsOut">Waiting...</div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    function el(id) { return document.getElementById(id); }
+    const OBS_STORAGE_KEY = "internalObservabilitySettings.v1";
+    const obsState = {
+      latest: {},
+      timer: null,
+      thresholds: {
+        sloFail: 0,
+        frictionWarn: 1,
+        pinHighRisk: true,
+      },
+    };
+
+    function loadObsSettings() {
+      try {
+        const raw = localStorage.getItem(OBS_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        return parsed;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function saveObsSettings(settings) {
+      try {
+        localStorage.setItem(OBS_STORAGE_KEY, JSON.stringify(settings));
+      } catch (_) {
+      }
+    }
+
+    function clearObsSettings() {
+      try {
+        localStorage.removeItem(OBS_STORAGE_KEY);
+      } catch (_) {
+      }
+    }
+
+    async function callApi(path, method, payload, timeoutMs) {
+      const controller = new AbortController();
+      const timeout = setTimeout(function() { controller.abort(); }, timeoutMs || 90000);
+      try {
+        const response = await fetch(path, {
+          method: method,
+          headers: { "Content-Type": "application/json" },
+          body: payload ? JSON.stringify(payload) : undefined,
+          signal: controller.signal,
+        });
+        const text = await response.text();
+        let data;
+        try { data = JSON.parse(text); } catch { data = text; }
+        if (!response.ok) {
+          throw new Error(typeof data === "string" ? data : JSON.stringify(data, null, 2));
+        }
+        return data;
+      } catch (err) {
+        if (err && err.name === "AbortError") {
+          throw new Error("Request timeout. Please try again.");
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    function bind(btnId, outId, runner, busyText) {
+      const btn = el(btnId);
+      const out = el(outId);
+      if (!btn || !out) return;
+      const idleText = btn.textContent;
+      btn.addEventListener("click", async function() {
+        btn.disabled = true;
+        btn.textContent = busyText || "Running...";
+        out.textContent = "Running...";
+        try {
+          const result = await runner();
+          out.textContent = JSON.stringify(result, null, 2);
+        } catch (err) {
+          out.textContent = "Error: " + (err.message || String(err));
+        } finally {
+          btn.disabled = false;
+          btn.textContent = idleText;
+        }
+      });
+    }
+
+    bind("chatBtn", "chatOut", async function() {
+      return callApi("/chat", "POST", {
+        message: el("chatMessage") ? el("chatMessage").value : "",
+      }, 120000);
+    }, "Running...");
+
+    bind("searchBtn", "searchOut", async function() {
+      return callApi("/search", "POST", {
+        query: el("searchQuery") ? el("searchQuery").value : "",
+        top_k: 5,
+        use_vector: true,
+      }, 90000);
+    }, "Searching...");
+
+    bind("imageBtn", "mediaOut", async function() {
+      return callApi("/media/image", "POST", {
+        prompt: el("mediaPrompt") ? el("mediaPrompt").value : "",
+        size: "1024x1024",
+        style: "professional",
+      }, 180000);
+    }, "Generating...");
+
+    bind("videoBtn", "mediaOut", async function() {
+      return callApi("/media/video", "POST", {
+        prompt: el("mediaPrompt") ? el("mediaPrompt").value : "",
+        seconds: "4",
+        size: "1280x720",
+      }, 180000);
+    }, "Creating Job...");
+
+    bind("pptBtn", "mediaOut", async function() {
+      return callApi("/media/ppt", "POST", {
+        topic: el("mediaPrompt") ? el("mediaPrompt").value : "",
+        audience: "enterprise stakeholders",
+        style: "professional",
+      }, 180000);
+    }, "Generating...");
+
+    async function getObservabilityBundle() {
+      const endpoints = [
+        { key: "metrics", path: "/metrics" },
+        { key: "slos", path: "/metrics/slos" },
+        { key: "models", path: "/metrics/models" },
+        { key: "eval", path: "/eval/stats" },
+        { key: "friction", path: "/feedback/friction" },
+        { key: "delegation", path: "/delegation/stats" },
+      ];
+
+      const result = { fetched_at: new Date().toISOString() };
+      for (const ep of endpoints) {
+        try {
+          result[ep.key] = await callApi(ep.path, "GET", null, 30000);
+        } catch (err) {
+          result[ep.key] = { error: err.message || String(err) };
+        }
+      }
+      return result;
+    }
+
+    function classifyObs(endpoint, payload) {
+      if (!payload || payload.error) return { level: "err", text: "Unavailable" };
+      if (endpoint === "slos") {
+        const failed = Number(payload.failed_slos || 0);
+        const overall = String(payload.overall_status || payload.status || "").toLowerCase();
+        if (failed > Number(obsState.thresholds.sloFail) || overall.includes("fail")) {
+          return { level: "err", text: "Failed " + failed };
+        }
+        if (overall.includes("degrad") || overall.includes("warn")) {
+          return { level: "warn", text: "At risk" };
+        }
+        return { level: "ok", text: "On track" };
+      }
+      if (endpoint === "eval") {
+        const status = String(payload.status || "").toLowerCase();
+        return status === "active" ? { level: "ok", text: "Active" } : { level: "warn", text: status || "Unknown" };
+      }
+      if (endpoint === "friction") {
+        const total = Number(payload.total_friction_points || payload.total || 0);
+        return total >= Number(obsState.thresholds.frictionWarn)
+          ? { level: "warn", text: total + " signals" }
+          : { level: "ok", text: "No signals" };
+      }
+      return { level: "ok", text: "Available" };
+    }
+
+    function renderObsSummary() {
+      const summary = el("obsSummary");
+      if (!summary) return;
+      const cards = [
+        ["metrics", "Runtime Metrics"],
+        ["slos", "SLO Status"],
+        ["models", "Model Comparison"],
+        ["eval", "Evaluation"],
+        ["friction", "Friction Signals"],
+        ["delegation", "Delegation"],
+      ];
+      const weight = { err: 0, warn: 1, ok: 2 };
+      const evaluated = cards.map(function(entry) {
+        const key = entry[0];
+        const title = entry[1];
+        const state = classifyObs(key, obsState.latest[key]);
+        return { key: key, title: title, state: state };
+      });
+      if (obsState.thresholds.pinHighRisk) {
+        evaluated.sort(function(a, b) {
+          return weight[a.state.level] - weight[b.state.level];
+        });
+      }
+      summary.innerHTML = evaluated.map(function(item) {
+        return '<div class="obs-card obs-' + item.state.level + '"><div class="k">' + item.title + '</div><div class="v">' + item.state.text + '</div></div>';
+      }).join("");
+    }
+
+    function syncObsThresholdsFromUi() {
+      const sloFailInput = el("obsSloFailThreshold");
+      const frictionInput = el("obsFrictionWarnThreshold");
+      const pinInput = el("obsPinHighRisk");
+      obsState.thresholds.sloFail = Math.max(0, Number(sloFailInput && sloFailInput.value ? sloFailInput.value : 0));
+      obsState.thresholds.frictionWarn = Math.max(0, Number(frictionInput && frictionInput.value ? frictionInput.value : 1));
+      obsState.thresholds.pinHighRisk = !!(pinInput && pinInput.checked);
+      const toggle = el("obsAutoRefresh");
+      saveObsSettings({
+        thresholds: {
+          sloFail: obsState.thresholds.sloFail,
+          frictionWarn: obsState.thresholds.frictionWarn,
+          pinHighRisk: obsState.thresholds.pinHighRisk,
+        },
+        autoRefresh: !!(toggle && toggle.checked),
+      });
+      renderObsSummary();
+    }
+
+    function updateObsAutoRefresh(enabled) {
+      const label = el("obsAutoRefreshState");
+      if (obsState.timer) {
+        clearInterval(obsState.timer);
+        obsState.timer = null;
+      }
+      if (enabled) {
+        obsState.timer = setInterval(async function() {
+          try {
+            const bundle = await getObservabilityBundle();
+            obsState.latest = {
+              metrics: bundle.metrics,
+              slos: bundle.slos,
+              models: bundle.models,
+              eval: bundle.eval,
+              friction: bundle.friction,
+              delegation: bundle.delegation,
+            };
+            renderObsSummary();
+            const out = el("obsOut");
+            if (out) out.textContent = JSON.stringify(bundle, null, 2);
+          } catch (_) {
+          }
+        }, 30000);
+      }
+      if (label) label.textContent = enabled ? "Auto refresh: every 30s" : "Auto refresh: off";
+    }
+
+    function resetObsDefaults() {
+      obsState.thresholds.sloFail = 0;
+      obsState.thresholds.frictionWarn = 1;
+      obsState.thresholds.pinHighRisk = true;
+
+      const sloFailInput = el("obsSloFailThreshold");
+      const frictionInput = el("obsFrictionWarnThreshold");
+      const pinInput = el("obsPinHighRisk");
+      const toggle = el("obsAutoRefresh");
+
+      if (sloFailInput) sloFailInput.value = "0";
+      if (frictionInput) frictionInput.value = "1";
+      if (pinInput) pinInput.checked = true;
+      if (toggle) toggle.checked = false;
+
+      updateObsAutoRefresh(false);
+      clearObsSettings();
+      syncObsThresholdsFromUi();
+      renderObsSummary();
+    }
+
+    bind("obsMetricsBtn", "obsOut", async function() {
+      const result = await callApi("/metrics", "GET", null, 30000);
+      obsState.latest.metrics = result;
+      renderObsSummary();
+      return result;
+    }, "Loading...");
+
+    bind("obsSlosBtn", "obsOut", async function() {
+      const result = await callApi("/metrics/slos", "GET", null, 30000);
+      obsState.latest.slos = result;
+      renderObsSummary();
+      return result;
+    }, "Loading...");
+
+    bind("obsModelsBtn", "obsOut", async function() {
+      const result = await callApi("/metrics/models", "GET", null, 30000);
+      obsState.latest.models = result;
+      renderObsSummary();
+      return result;
+    }, "Loading...");
+
+    bind("obsEvalBtn", "obsOut", async function() {
+      const result = await callApi("/eval/stats", "GET", null, 30000);
+      obsState.latest.eval = result;
+      renderObsSummary();
+      return result;
+    }, "Loading...");
+
+    bind("obsFrictionBtn", "obsOut", async function() {
+      const result = await callApi("/feedback/friction", "GET", null, 30000);
+      obsState.latest.friction = result;
+      renderObsSummary();
+      return result;
+    }, "Loading...");
+
+    bind("obsDelegationBtn", "obsOut", async function() {
+      const result = await callApi("/delegation/stats", "GET", null, 30000);
+      obsState.latest.delegation = result;
+      renderObsSummary();
+      return result;
+    }, "Loading...");
+
+    bind("obsRefreshAllBtn", "obsOut", async function() {
+      const bundle = await getObservabilityBundle();
+      obsState.latest = {
+        metrics: bundle.metrics,
+        slos: bundle.slos,
+        models: bundle.models,
+        eval: bundle.eval,
+        friction: bundle.friction,
+        delegation: bundle.delegation,
+      };
+      renderObsSummary();
+      return bundle;
+    }, "Refreshing...");
+
+    (function initObservability() {
+      const toggle = el("obsAutoRefresh");
+      const saved = loadObsSettings();
+      if (saved && saved.thresholds) {
+        obsState.thresholds.sloFail = Math.max(0, Number(saved.thresholds.sloFail || 0));
+        obsState.thresholds.frictionWarn = Math.max(0, Number(saved.thresholds.frictionWarn || 1));
+        obsState.thresholds.pinHighRisk = !!saved.thresholds.pinHighRisk;
+      }
+
+      const sloFailInput = el("obsSloFailThreshold");
+      const frictionInput = el("obsFrictionWarnThreshold");
+      const pinInput = el("obsPinHighRisk");
+      if (sloFailInput) sloFailInput.value = String(obsState.thresholds.sloFail);
+      if (frictionInput) frictionInput.value = String(obsState.thresholds.frictionWarn);
+      if (pinInput) pinInput.checked = !!obsState.thresholds.pinHighRisk;
+
+      if (toggle) {
+        if (saved && typeof saved.autoRefresh === "boolean") {
+          toggle.checked = saved.autoRefresh;
+        }
+        toggle.addEventListener("change", function() {
+          updateObsAutoRefresh(!!toggle.checked);
+          syncObsThresholdsFromUi();
+        });
+      }
+      const thresholdInputs = [el("obsSloFailThreshold"), el("obsFrictionWarnThreshold"), el("obsPinHighRisk")].filter(Boolean);
+      thresholdInputs.forEach(function(input) {
+        input.addEventListener("change", syncObsThresholdsFromUi);
+      });
+      const resetBtn = el("obsResetDefaultsBtn");
+      if (resetBtn) {
+        resetBtn.addEventListener("click", function() {
+          resetObsDefaults();
+        });
+      }
+      syncObsThresholdsFromUi();
+      if (toggle && toggle.checked) updateObsAutoRefresh(true);
+      renderObsSummary();
+    })();
+  </script>
+</body>
+</html>

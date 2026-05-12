@@ -1,0 +1,44 @@
+name: Financial Compliance Q&A Bot
+id: financial-compliance
+industry: Financial Services (Banking)
+customer_profile:
+  size: "Tier 1 bank, 50K+ employees"
+  team: "3 ML engineers, 10 compliance officers"
+  cloud: "Multi-cloud (Azure primary, evaluating GCP)"
+  budget: "$5,000/month"
+
+problem: |
+  Compliance officers spend 4+ hours/day searching through 12,000+ regulatory
+  documents (FINRA, SEC, OCC, FDIC). Current keyword search has 40% resolution
+  rate. New regulations take weeks to be indexed and discoverable.
+
+requirements:
+  - Natural language Q&A over 12,000+ regulatory documents
+  - Source citation for every answer (audit requirement)
+  - PII detection and masking (customer data in queries)
+  - SOC2 + FINRA compliance
+  - Audit trail of all queries and responses
+  - Multi-language support (English + Spanish)
+  - Response time < 5 seconds (p95)
+  - 99.9% uptime SLA
+
+constraints:
+  - No customer data can leave the bank's cloud tenant
+  - All LLM interactions must be logged and auditable
+  - Model outputs must be reviewed by compliance team for first 30 days
+  - Cannot use public API endpoints — must be VNet-isolated
+  - FINRA 17a-4 record retention (7 years for audit logs)
+
+success_metrics:
+  - Resolution rate > 80% (from 40%)
+  - Compliance officer time savings > 2 hours/day
+  - Groundedness score > 95%
+  - Zero safety incidents in first 90 days
+
+expected_architecture:
+  pattern: "rag-enterprise + governance-pipeline"
+  retrieval: "Azure AI Search (hybrid) or Vertex AI Search"
+  generation: "GPT-4.1-mini or Gemini 2.5 Flash (cost-optimized)"
+  governance: "Full pipeline — PII filter, content safety, audit logging"
+  evaluation: "10% continuous sampling + weekly compliance review"
+  estimated_cost: "$3,200/month"

@@ -1,0 +1,47 @@
+name: Retail Customer Service Agent
+id: retail-customer-service
+industry: Retail / E-Commerce
+customer_profile:
+  size: "Online retailer, 5M customers, 200K orders/month"
+  team: "4 ML engineers, customer service team of 50"
+  cloud: "AWS (considering migration to GCP)"
+  budget: "$15,000/month"
+
+problem: |
+  Customer service handles 50K tickets/month. 60% are repetitive (order
+  status, returns, sizing questions). Human agents spend 70% of time on
+  repetitive queries. CSAT score is 3.2/5.0 due to long wait times (avg
+  15 minutes). Want to automate 60%+ of tickets while maintaining quality.
+
+requirements:
+  - Multi-agent system for different ticket types
+  - Agent 1 (FAQ): Answer product questions from catalog
+  - Agent 2 (Orders): Check order status, process returns (needs API access)
+  - Agent 3 (Escalation): Detect frustrated customers, handoff to human
+  - Integration with Shopify (orders) and Zendesk (tickets)
+  - Sentiment analysis for escalation triggers
+  - Multi-channel: website chat, email, SMS
+  - Human-in-the-loop for refunds > $100
+  - Response time < 2 seconds
+
+constraints:
+  - PCI-DSS: Cannot store or display full credit card numbers
+  - Must handle 500 concurrent conversations
+  - Graceful degradation when LLM is slow (queue + fallback)
+  - Customer must always have option to reach human agent
+  - Must support 24/7 operation
+
+success_metrics:
+  - Automation rate > 60% of tickets
+  - CSAT > 4.0/5.0 (from 3.2)
+  - Average response time < 30 seconds (from 15 minutes)
+  - Human agent escalation rate < 40%
+  - Zero PCI violations
+
+expected_architecture:
+  pattern: "multi-agent-orchestration + agent-builder-managed (hybrid)"
+  retrieval: "Product catalog search (structured) + FAQ knowledge base"
+  generation: "Gemini 2.5 Flash (cheapest for high volume)"
+  orchestration: "Managed Agent Builder for simple flows + custom for complex"
+  special: "Shopify/Zendesk API connectors, sentiment-based routing"
+  estimated_cost: "$12,000/month"

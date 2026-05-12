@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "enterprise-genai-content-studio"
+version = "0.3.0"
+description = "Enterprise GenAI Content Studio — Multi-agent platform for image, video, and PPT generation with dual-layer guardrails, RAG, MCP server, and production-grade governance."
+requires-python = ">=3.11"
+dependencies = [
+    # --- Web framework ---
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    # --- LLM providers ---
+    "openai>=1.60.0",                     # OpenAI-compatible API (Gemini via google-genai)
+    "google-genai>=1.0.0",                # Google Gemini SDK (Vertex AI + AI Studio)
+    "google-cloud-aiplatform>=1.74.0",    # Vertex AI platform SDK
+    # --- Google Cloud services ---
+    "google-auth>=2.36.0",                # OAuth 2.0 + service account auth
+    "google-auth-oauthlib>=1.2.0",        # OAuth 2.0 web/installed app flows
+    "google-auth-httplib2>=0.2.0",
+    "google-cloud-storage>=2.18.0",       # Cloud Storage (document source of truth)
+    "google-cloud-discoveryengine>=0.13.0", # Vertex AI Search (hybrid retrieval)
+    # --- Azure (kept for multi-cloud support) ---
+    "azure-identity>=1.19.0",
+    "azure-storage-blob>=12.24.0",
+    "azure-search-documents>=11.6.0",
+    "azure-cosmos>=4.9.0",
+    "azure-ai-evaluation>=1.4.0",
+    # --- Extensibility ---
+    "mcp[cli]>=1.6.0",
+    # --- Data models ---
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    # --- Observability ---
+    "structlog>=24.4.0",
+    "opentelemetry-api>=1.29.0",
+    "opentelemetry-sdk>=1.29.0",
+    "opentelemetry-instrumentation-fastapi>=0.50b0",
+    "opentelemetry-exporter-gcp-trace>=1.8.0",  # Cloud Trace exporter
+    # --- Media generation ---
+    "python-pptx>=1.0.0",               # PowerPoint assembly (.pptx)
+    "Pillow>=10.0.0",                    # Image processing for PPT covers
+    # --- HTTP ---
+    "httpx>=0.28.0",
+    "redis>=5.2.0",
+    "psycopg[binary]>=3.2.0",
+    # --- CLI ---
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+fda = "src.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0",
+    "ruff>=0.8.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

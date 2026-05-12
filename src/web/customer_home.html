@@ -1,0 +1,1704 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enterprise Content Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --surface-2: #f8f9fa;
+      --surface-3: #f1f3f4;
+      --border: #dadce0;
+      --border-hover: #bdc1c6;
+      --text: #202124;
+      --text-2: #5f6368;
+      --text-3: #80868b;
+      --accent: #1a73e8;
+      --accent-glow: rgba(26,115,232,0.12);
+      --accent-2: #1e8e3e;
+      --accent-2-glow: rgba(30,142,62,0.12);
+      --warn: #f9ab00;
+      --err: #d93025;
+      --ok: #1e8e3e;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(60,64,67,0.15), 0 4px 8px rgba(60,64,67,0.1);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Navigation */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px) saturate(1.4);
+      background: rgba(255,255,255,0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      box-shadow: 0 1px 2px rgba(60,64,67,0.1);
+    }
+
+    .nav-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-brand .logo {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-brand .logo svg { width: 18px; height: 18px; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-link {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .nav-link:hover { color: var(--text); background: var(--surface-2); }
+
+    .nav-status {
+      font-size: 12px;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Page Layout */
+    .page {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 32px;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    .page-header p {
+      margin-top: 8px;
+      color: var(--text-3);
+      font-size: 15px;
+      max-width: 600px;
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+    }
+
+    .grid .primary { grid-column: 1 / -1; }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .card-subtitle {
+      margin-top: 4px;
+      color: var(--text-3);
+      font-size: 13px;
+    }
+
+    .card-badge {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: var(--accent-glow);
+      color: var(--accent);
+    }
+
+    .card-badge.green {
+      background: var(--accent-2-glow);
+      color: var(--accent-2);
+    }
+
+    .card-badge.amber {
+      background: rgba(249,171,0,0.12);
+      color: #e37400;
+    }
+
+    /* Form elements */
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    textarea, input, select {
+      width: 100%;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 14px;
+      color: var(--text);
+      font-family: inherit;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    textarea:focus, input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .field { margin-bottom: 16px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #1765cc;
+      box-shadow: 0 2px 6px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: var(--surface-3);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-2);
+      border-color: var(--border-hover);
+    }
+
+    .btn-danger {
+      background: rgba(217,48,37,0.08);
+      color: var(--err);
+      border: 1px solid rgba(217,48,37,0.2);
+    }
+
+    .btn-danger:hover { background: rgba(217,48,37,0.15); }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Output panels */
+    .output {
+      margin-top: 20px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      min-height: 120px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      color: var(--text-2);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+    }
+
+    .output.rich {
+      white-space: normal;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .output a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .output a:hover { text-decoration: underline; }
+
+    /* Video/Image preview */
+    .video-preview, .image-preview {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .image-preview { background: var(--surface-2); }
+
+    /* Job status */
+    .job-status {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .job-status-item {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .job-status-item .label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-3);
+      margin-bottom: 4px;
+    }
+
+    .job-status-item .value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--surface-3);
+      color: var(--text-3);
+    }
+
+    .badge.ok { background: rgba(30,142,62,0.1); color: var(--ok); }
+    .badge.warn { background: rgba(249,171,0,0.12); color: #e37400; }
+    .badge.err { background: rgba(217,48,37,0.1); color: var(--err); }
+
+    /* History table */
+    .table-container {
+      margin-top: 16px;
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 700px;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-3);
+      background: var(--surface-2);
+    }
+
+    td { color: var(--text-2); }
+    td a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    td a:hover { text-decoration: underline; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(0,0,0,0.02); }
+
+    .muted { color: var(--text-3); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .page { padding: 16px; }
+      .nav { padding: 0 16px; }
+      .job-status { grid-template-columns: 1fr; }
+      .field-row { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* Video progress bar */
+    .video-progress { display: none; margin-top: 16px; }
+    .video-progress.active { display: block; }
+    .video-progress .progress-label { font-size: 13px; color: var(--text-2); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .video-progress .progress-label svg { animation: spin 1.2s linear infinite; }
+    .video-progress .progress-track { height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
+    .video-progress .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.5s ease; width: 0%; }
+    @keyframes progress-pulse { 0%,100%{ opacity:.6 } 50%{ opacity:1 } }
+    .video-progress.active .progress-fill { animation: progress-pulse 1.5s ease-in-out infinite; }
+
+    /* Info panel (nav overlays) */
+    .info-overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.35); }
+    .info-overlay.active { display:flex; align-items:flex-start; justify-content:center; padding-top:80px; }
+    .info-panel { background:#fff; border-radius:var(--radius); box-shadow:0 8px 32px rgba(0,0,0,0.18); max-width:800px; width:90%; max-height:75vh; overflow-y:auto; padding:28px; position:relative; }
+    .info-panel-close { position:absolute; top:12px; right:16px; background:none; border:none; font-size:22px; cursor:pointer; color:var(--text-3); line-height:1; }
+    .info-panel-close:hover { color:var(--text); }
+    .info-panel h2 { margin-bottom:16px; font-size:20px; font-weight:700; }
+    .info-panel .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .info-panel .info-item { background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; }
+    .info-panel .info-item .label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-3); margin-bottom:4px; }
+    .info-panel .info-item .value { font-size:14px; font-weight:600; color:var(--text); }
+  </style>
+</head>
+<body>
+  <!-- Info overlay panel -->
+  <div class="info-overlay" id="infoOverlay" onclick="if(event.target===this)closeInfoPanel()">
+    <div class="info-panel">
+      <button class="info-panel-close" onclick="closeInfoPanel()">&times;</button>
+      <div id="infoPanelContent">Loading...</div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+        </div>
+        Enterprise Content Studio
+      </div>
+      <div class="nav-links">
+        <a class="nav-link" href="/docs" target="_blank">API Docs</a>
+        <a class="nav-link" href="javascript:void(0)" onclick="showInfoPanel('console')">Console</a>
+        <a class="nav-link" href="javascript:void(0)" onclick="showInfoPanel('architecture')">Architecture</a>
+        <a class="nav-link" href="javascript:void(0)" onclick="showInfoPanel('health')">Health</a>
+      </div>
+      <div class="nav-status">
+        <span class="status-dot"></span>
+        <span id="runtimeStatus">Connecting...</span>
+        <button class="btn btn-secondary" id="refreshSystemBtn" style="padding:6px 12px;font-size:12px;">Refresh</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="page">
+    <header class="page-header">
+      <h1>Create &amp; Manage Media</h1>
+      <p>Generate videos, images, and presentations with enterprise AI. All assets are stored, tracked, and downloadable.</p>
+    </header>
+
+    <section class="grid">
+      <!-- Video (Primary, full width) -->
+      <article class="card primary">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Video Generation</h2>
+            <p class="card-subtitle">One-click video generation with Sora-2. Automatically renders and displays.</p>
+          </div>
+          <span class="card-badge">One-Step</span>
+        </div>
+
+        <div class="field">
+          <label for="videoPrompt">Prompt</label>
+          <textarea id="videoPrompt">A cinematic enterprise product launch: cloud architecture layers assembling into a dashboard, smooth camera movement, volumetric lighting, professional color grading.</textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="videoSeconds">Duration</label>
+            <select id="videoSeconds">
+              <option value="4">4 seconds</option>
+              <option value="8">8 seconds</option>
+              <option value="12">12 seconds</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="videoSize">Resolution</label>
+            <select id="videoSize">
+              <option value="1280x720">1280 x 720 (HD)</option>
+              <option value="1920x1080">1920 x 1080 (Full HD)</option>
+              <option value="1024x1024">1024 x 1024 (Square)</option>
+              <option value="480x480">480 x 480 (Small)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Reference Image (optional — first frame)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <label class="btn btn-secondary" style="cursor:pointer;font-size:13px;padding:8px 14px;flex:0 0 auto;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload Image
+              <input type="file" id="videoRefFile" accept="image/*" style="display:none;" />
+            </label>
+            <span id="videoRefFileName" class="muted" style="font-size:12px;line-height:32px;">No file selected</span>
+          </div>
+          <input id="videoRefImage" placeholder="Or paste image URL to use as starting frame" />
+          <div id="videoRefPreview" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="createVideoBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Generate Video
+          </button>
+        </div>
+
+        <div class="video-progress" id="videoProgress">
+          <div class="progress-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            <span id="videoProgressText">Submitting job...</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="videoProgressBar"></div></div>
+        </div>
+
+        <div class="output" id="videoOut">Enter a prompt and click Generate Video.</div>
+      </article>
+
+      <!-- Image -->
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Image Generation</h2>
+            <p class="card-subtitle">High-quality images via GPT-Image-2</p>
+          </div>
+          <span class="card-badge green">Instant</span>
+        </div>
+
+        <div class="field">
+          <label for="imagePrompt">Prompt</label>
+          <textarea id="imagePrompt" style="min-height:80px;">Enterprise AI product launch hero visual — clean gradient, abstract neural network nodes, professional color palette, high contrast.</textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="imageSize">Size</label>
+            <select id="imageSize">
+              <option value="1024x1024">1024 x 1024</option>
+              <option value="1536x1024">1536 x 1024 (Landscape)</option>
+              <option value="1024x1536">1024 x 1536 (Portrait)</option>
+              <option value="auto">Auto</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="imageQuality">Quality</label>
+            <select id="imageQuality">
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="imageBackground">Background</label>
+            <select id="imageBackground">
+              <option value="auto">Auto</option>
+              <option value="transparent">Transparent</option>
+              <option value="opaque">Opaque</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="imageFormat">Format</label>
+            <select id="imageFormat">
+              <option value="png">PNG</option>
+              <option value="webp">WebP</option>
+              <option value="jpeg">JPEG</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Reference Images (optional — style/edit input)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <label class="btn btn-secondary" style="cursor:pointer;font-size:13px;padding:8px 14px;flex:0 0 auto;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload Files
+              <input type="file" id="imageFiles" multiple accept="image/*" style="display:none;" />
+            </label>
+            <span id="imageFileNames" class="muted" style="font-size:12px;line-height:32px;">No files selected</span>
+          </div>
+          <input id="imageRef1" placeholder="Or paste image URL 1 (e.g. https://example.com/ref.jpg)" style="margin-bottom:8px;" />
+          <input id="imageRef2" placeholder="Or paste image URL 2 (optional)" />
+          <div id="imagePreviewRow" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"></div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="imageBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Generate Image
+          </button>
+        </div>
+
+        <div class="output" id="imageOut">Ready.</div>
+      </article>
+
+      <!-- PPT -->
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Presentation Builder</h2>
+            <p class="card-subtitle">Multi-slide PPTX from one topic</p>
+          </div>
+          <span class="card-badge amber">Document</span>
+        </div>
+
+        <div class="field">
+          <label for="pptTopic">Topic</label>
+          <textarea id="pptTopic" style="min-height:80px;">Enterprise GenAI rollout plan: governance controls, cost model, 90-day milestones, and success metrics for executive stakeholders.</textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="pptAudience">Audience</label>
+            <select id="pptAudience">
+              <option value="enterprise stakeholders">Enterprise Stakeholders</option>
+              <option value="technical team">Technical Team</option>
+              <option value="executive leadership">Executive Leadership</option>
+              <option value="customers">Customers</option>
+              <option value="investors">Investors</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="pptStyle">Style</label>
+            <select id="pptStyle">
+              <option value="professional">Professional</option>
+              <option value="minimal">Minimal</option>
+              <option value="vibrant">Vibrant</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="pptSlides">Slide Count</label>
+          <select id="pptSlides">
+            <option value="4">4 slides</option>
+            <option value="6" selected>6 slides</option>
+            <option value="8">8 slides</option>
+            <option value="10">10 slides</option>
+            <option value="12">12 slides</option>
+          </select>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="pptBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Generate PPT
+          </button>
+        </div>
+
+        <div class="output" id="pptOut">Ready.</div>
+      </article>
+
+      <!-- Internal Knowledge Search (full width) -->
+      <article class="card primary">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Internal Knowledge Search</h2>
+            <p class="card-subtitle">Add your data, build embeddings, and run hybrid RAG search with semantic rerank.</p>
+          </div>
+          <span class="card-badge">RAG</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;background:var(--surface-2);">
+            <h3 style="font-size:14px;margin-bottom:12px;">Add Your Data (AI Foundry)</h3>
+            <div class="output rich" id="ragIngestOut" style="margin-top:0;">
+              <div><strong>Data onboarding is managed in AI Foundry.</strong></div>
+              <div style="margin-top:8px;">This page only runs retrieval.</div>
+              <div style="margin-top:8px;">Flow: AI Foundry Add your data -> indexed in Azure AI Search -> query here for RAG.</div>
+              <div style="margin-top:8px;">When you choose <strong>Internal Knowledge</strong>, the request goes to hybrid RAG (embedding + semantic rerank).</div>
+            </div>
+          </div>
+
+          <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;background:var(--surface-2);">
+            <h3 style="font-size:14px;margin-bottom:12px;">AI Search (RAG + Embedding + Rerank)</h3>
+            <div class="field">
+              <label for="ragSearchQuery">Search Query</label>
+              <input id="ragSearchQuery" placeholder="e.g. What are our PII masking requirements?" />
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="ragSearchScope">Search Scope</label>
+                <select id="ragSearchScope">
+                  <option value="internal" selected>Internal Knowledge (RAG)</option>
+                  <option value="general">General QA (LLM)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="ragSearchTopK">Top K</label>
+                <select id="ragSearchTopK">
+                  <option value="3">3</option>
+                  <option value="5" selected>5</option>
+                  <option value="8">8</option>
+                  <option value="10">10</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="ragSearchCategory">Category Filter (optional)</label>
+                <input id="ragSearchCategory" placeholder="e.g. internal, policy, hr" />
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:12px;">
+              <label style="display:flex;align-items:center;gap:8px;margin-bottom:0;text-transform:none;letter-spacing:0;">
+                <input type="checkbox" id="ragUseVector" checked style="width:16px;height:16px;" />
+                Use vector embedding retrieval + semantic rerank (RAG only)
+              </label>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" id="ragSearchBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Search
+              </button>
+            </div>
+            <div class="output" id="ragSearchOut" style="margin-top:12px;">Search results will appear here.</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Asset History (full width) -->
+      <article class="card primary">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Customer Service Snapshot</h2>
+            <p class="card-subtitle">Business-level availability, delivery, and trust signals for customers.</p>
+          </div>
+          <div class="btn-group" style="margin-top:0;">
+            <button class="btn btn-secondary" id="refreshCustomerMetricsBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div id="customerMetricsPanel" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+          <div class="muted" style="grid-column:1/-1;">Loading customer metrics...</div>
+        </div>
+        <div id="customerMetricsMeta" class="muted" style="margin-top:10px;font-size:12px;">Updated: --</div>
+      </article>
+
+      <!-- Asset History (full width) -->
+      <article class="card primary">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Asset History</h2>
+            <p class="card-subtitle">All generated media — images, videos, and presentations</p>
+          </div>
+          <div class="btn-group" style="margin-top:0;">
+            <button class="btn btn-secondary" id="refreshHistoryBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              Refresh
+            </button>
+            <button class="btn btn-danger" id="clearHistoryBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Clear All
+            </button>
+            <button class="btn btn-primary" id="downloadAllBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download All
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Type</th>
+                <th>Created</th>
+                <th>Artifact</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="5" class="muted">Loading history...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- Governance & Compliance (full width) -->
+      <article class="card primary">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Governance &amp; Compliance</h2>
+            <p class="card-subtitle">GDPR · Content Safety · PII Protection · Audit Trail</p>
+          </div>
+          <div class="btn-group" style="margin-top:0;">
+            <button class="btn btn-secondary" id="refreshGovernanceBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              Refresh
+            </button>
+            <button class="btn btn-primary" id="testSafetyBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Test Safety
+            </button>
+          </div>
+        </div>
+
+        <div id="governancePanel" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div style="grid-column:1/-1;" class="muted" id="governanceLoading">Loading governance status...</div>
+        </div>
+
+        <div id="safetyTestPanel" style="display:none;margin-top:20px;">
+          <div class="field">
+            <label for="safetyTestInput">Test Text (try PII like john@email.com or injection like "ignore previous instructions")</label>
+            <textarea id="safetyTestInput" style="min-height:60px;">My email is john.doe@company.com and my SSN is 123-45-6789. Please help me with my account.</textarea>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="runSafetyTestBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Run Test
+            </button>
+          </div>
+          <div class="output" id="safetyTestOut" style="margin-top:12px;">Click "Run Test" to screen the text above.</div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const state = { pollTimer: null, activeJobId: "", isPolling: false, customerMetricsPrev: null };
+    const $ = (id) => document.getElementById(id);
+    function nowText() { return new Date().toLocaleTimeString(); }
+
+    function closeInfoPanel() { const o = $("infoOverlay"); if (o) o.classList.remove("active"); }
+
+    async function showInfoPanel(type) {
+      const overlay = $("infoOverlay");
+      const content = $("infoPanelContent");
+      if (!overlay || !content) return;
+      overlay.classList.add("active");
+      content.innerHTML = '<div class="muted">Loading...</div>';
+
+      try {
+        if (type === "health") {
+          const data = await fetch("/health").then(r => r.json());
+          let h = '<h2>System Health</h2><div class="info-grid">';
+          h += '<div class="info-item"><div class="label">Status</div><div class="value" style="color:var(--ok)">● ' + data.status + '</div></div>';
+          h += '<div class="info-item"><div class="label">Version</div><div class="value">' + data.version + '</div></div>';
+          h += '<div class="info-item"><div class="label">Cloud</div><div class="value">' + data.cloud_provider + '</div></div>';
+          h += '<div class="info-item"><div class="label">Agents</div><div class="value">' + Object.keys(data.agents || {}).join(", ") + '</div></div>';
+          const stores = ["database", "cache", "storage", "vector_search", "postgres"];
+          for (const s of stores) {
+            const info = data[s] || {};
+            const active = info.status === "active";
+            h += '<div class="info-item"><div class="label">' + s.replace("_", " ") + '</div><div class="value" style="color:' + (active ? 'var(--ok)' : 'var(--text-3)') + '">' + (active ? '● Active' : '○ Disabled') + ' (' + (info.provider || "n/a") + ')</div></div>';
+          }
+          h += '</div>';
+          const gov = data.governance || {};
+          h += '<div style="margin-top:16px;"><strong>Governance</strong>: PII ' + (gov.pii_detection ? '✅' : '❌') + ' · Safety ' + (gov.content_safety ? '✅' : '❌') + ' · Audit ' + (gov.audit_logging ? '✅' : '❌') + '</div>';
+          h += '<div style="margin-top:8px;font-size:12px;color:var(--text-3);">Capabilities: ' + (data.capabilities || []).join(", ") + '</div>';
+          content.innerHTML = h;
+
+        } else if (type === "architecture") {
+          const data = await fetch("/architecture/status").then(r => r.json());
+          let h = '<h2>Architecture Status</h2><div class="info-grid">';
+          for (const [key, info] of Object.entries(data)) {
+            const d = info || {};
+            const enabled = d.enabled;
+            h += '<div class="info-item"><div class="label">' + key.replace("_", " ") + '</div>';
+            h += '<div class="value" style="color:' + (enabled ? 'var(--ok)' : 'var(--text-3)') + '">' + (enabled ? '● Connected' : '○ Disabled') + '</div>';
+            const extra = [];
+            if (d.document_count !== undefined) extra.push('Documents: ' + d.document_count);
+            if (d.media_records !== undefined) extra.push('Media records: ' + d.media_records);
+            if (d.health) extra.push('Health: ' + (d.health.status || JSON.stringify(d.health)));
+            if (d.summary) { for (const [sk, sv] of Object.entries(d.summary)) extra.push(sk + ': ' + sv); }
+            if (d.db_size !== undefined) extra.push('Cache keys: ' + d.db_size);
+            if (extra.length) h += '<div style="font-size:11px;color:var(--text-3);margin-top:4px;">' + extra.join(' · ') + '</div>';
+            h += '</div>';
+          }
+          h += '</div>';
+          content.innerHTML = h;
+
+        } else if (type === "console") {
+          let h = '<h2>API Console</h2>';
+          h += '<p style="color:var(--text-2);margin-bottom:16px;">Quick links to all platform endpoints.</p>';
+          const endpoints = [
+            { name: "Swagger Docs", url: "/docs", desc: "Interactive API documentation" },
+            { name: "Health Check", url: "/health", desc: "System health status" },
+            { name: "Architecture", url: "/architecture/status", desc: "All data store connections" },
+            { name: "Governance", url: "/governance/status", desc: "Safety, PII, GDPR compliance" },
+            { name: "Analytics", url: "/analytics/summary", desc: "Data store summaries" },
+            { name: "Skills Registry", url: "/skills", desc: "Available AI skills" },
+            { name: "Evaluation Stats", url: "/eval/stats", desc: "LLM quality metrics" },
+            { name: "Metrics", url: "/metrics", desc: "LLM-native performance metrics" },
+            { name: "SLO Status", url: "/metrics/slos", desc: "Service level objectives" },
+            { name: "Feedback", url: "/feedback/friction", desc: "Friction point detection" },
+            { name: "Feature Requests", url: "/feedback/feature-requests", desc: "Auto-detected features" },
+            { name: "Storage Docs", url: "/storage/documents", desc: "Blob storage documents" },
+          ];
+          h += '<div class="info-grid">';
+          for (const ep of endpoints) {
+            h += '<div class="info-item" style="cursor:pointer;" onclick="window.open(\'' + ep.url + '\',\'_blank\')"><div class="label">' + ep.name + '</div><div class="value" style="font-size:13px;color:var(--accent);">' + ep.url + '</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">' + ep.desc + '</div></div>';
+          }
+          h += '</div>';
+          content.innerHTML = h;
+        }
+      } catch (err) {
+        content.innerHTML = '<div style="color:var(--err);">Error: ' + (err.message || String(err)) + '</div>';
+      }
+    }
+
+    function escapeHtml(input) {
+      return String(input || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function setBusy(btn, busy, busyText) {
+      if (!btn) return;
+      if (!btn.dataset.idleText) btn.dataset.idleText = btn.innerHTML;
+      btn.disabled = !!busy;
+      if (busy) {
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> ' + (busyText || 'Working...');
+      } else {
+        btn.innerHTML = btn.dataset.idleText;
+      }
+    }
+
+    function outputPathToUrl(filePath) {
+      if (!filePath) return "";
+      const normalized = String(filePath).replace(/\\/g, "/").replace(/^\.\//, "");
+      const marker = "output/";
+      const idx = normalized.indexOf(marker);
+      if (idx < 0) return "";
+      return "/" + normalized.slice(idx).split("/").map(encodeURIComponent).join("/");
+    }
+
+    function findVideoUrl(node) {
+      if (!node) return "";
+      if (typeof node === "string") {
+        const lower = node.toLowerCase();
+        if (lower.startsWith("/media/video/") && lower.includes("/stream")) return node;
+        if ((lower.startsWith("http://") || lower.startsWith("https://")) && [".mp4", ".webm", ".mov", ".m3u8"].some((ext) => lower.includes(ext))) return node;
+      }
+      if (typeof node !== "object") return "";
+      const preferred = ["video_url", "download_url", "output_url", "url", "content_url"];
+      for (const key of preferred) { const v = node[key]; if (typeof v === "string" && (v.startsWith("/") || /^https?:\/\//i.test(v))) return v; }
+      for (const key of Object.keys(node)) { const found = findVideoUrl(node[key]); if (found) return found; }
+      return "";
+    }
+
+    async function apiRequest(path, options) {
+      const cfg = options || {};
+      const method = cfg.method || "GET";
+      const timeoutMs = cfg.timeoutMs || 90000;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(path, { method, headers: { "Content-Type": "application/json" }, body: cfg.body ? JSON.stringify(cfg.body) : undefined, signal: controller.signal });
+        const text = await response.text();
+        let payload; try { payload = JSON.parse(text); } catch { payload = text; }
+        if (!response.ok) { const message = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2); throw new Error(message || ("HTTP " + response.status)); }
+        return payload;
+      } catch (err) {
+        if (err && err.name === "AbortError") throw new Error("Request timed out. Please retry.");
+        throw err;
+      } finally { clearTimeout(timer); }
+    }
+
+    function setPanelText(id, text) { const n = $(id); if (!n) return; n.classList.remove("rich"); n.textContent = text; }
+    function setPanelHtml(id, html) { const n = $(id); if (!n) return; n.classList.add("rich"); n.innerHTML = html; }
+
+    /* --- Video progress helpers --- */
+    function showVideoProgress(text, pct) {
+      const box = $("videoProgress"); if (box) box.classList.add("active");
+      const label = $("videoProgressText"); if (label) label.textContent = text || "Processing...";
+      const bar = $("videoProgressBar"); if (bar) bar.style.width = Math.min(pct || 0, 100) + "%";
+    }
+    function hideVideoProgress() {
+      const box = $("videoProgress"); if (box) box.classList.remove("active");
+    }
+
+    function renderVideoPayload(payload, jobId) {
+      const actualJob = jobId || payload.job_id || "unknown";
+      const status = String(payload.status || "unknown").toLowerCase();
+      const videoUrl = findVideoUrl(payload);
+      const chunks = [];
+      if (videoUrl) {
+        const filename = "video-" + actualJob.slice(0, 16) + ".mp4";
+        chunks.push('<div style="margin-bottom:12px"><span class="badge ok">Completed</span> &nbsp; Video is ready!</div>');
+        chunks.push('<video class="video-preview" controls autoplay preload="auto" src="' + videoUrl + '" onerror="this.outerHTML=\'<div style=padding:24px;text-align:center;color:var(--text-3);border:1px dashed var(--border);border-radius:8px;>Video stream not available yet. Try <a href=' + videoUrl + ' target=_blank>opening directly</a> or wait a moment and refresh.</div>\'"></video>');
+        chunks.push('<div class="btn-group" style="margin-top:12px">');
+        chunks.push('<a class="btn btn-primary" href="' + videoUrl + '" download="' + filename + '" style="text-decoration:none;font-size:13px;padding:8px 14px;">Download MP4</a>');
+        chunks.push('<a class="btn btn-secondary" href="' + videoUrl + '" target="_blank" style="text-decoration:none;font-size:13px;padding:8px 14px;">Open in New Tab</a>');
+        chunks.push('</div>');
+      } else if (status === "failed" || status === "error") {
+        chunks.push('<div style="margin-bottom:12px"><span class="badge err">Failed</span> &nbsp; Video generation failed.</div>');
+      } else {
+        chunks.push('<div style="margin-bottom:12px"><span class="badge warn">' + escapeHtml(status) + '</span> &nbsp; Job: ' + escapeHtml(actualJob) + '</div>');
+      }
+      chunks.push('<details style="margin-top:12px"><summary style="cursor:pointer;color:var(--text-3);font-size:12px">Raw response</summary><pre style="margin-top:8px;font-size:11px;overflow-x:auto">' + escapeHtml(JSON.stringify(payload, null, 2)) + '</pre></details>');
+      return chunks.join("");
+    }
+
+    function renderImagePayload(payload) {
+      const fileUrl = outputPathToUrl(payload.file_path);
+      if (!fileUrl) return '<pre style="font-size:12px">' + escapeHtml(JSON.stringify(payload, null, 2)) + '</pre>';
+      return [
+        '<div style="margin-bottom:12px"><strong>Image generated successfully.</strong></div>',
+        '<div class="btn-group" style="margin-top:0;margin-bottom:12px">',
+        '<a class="btn btn-secondary" href="' + fileUrl + '" target="_blank" style="text-decoration:none;font-size:13px;padding:8px 14px;">Open Full Size</a>',
+        '<a class="btn btn-primary" href="' + fileUrl + '" download style="text-decoration:none;font-size:13px;padding:8px 14px;">Download PNG</a>',
+        '</div>',
+        '<img class="image-preview" src="' + fileUrl + '" alt="Generated image" style="max-height:400px;object-fit:contain;" />',
+      ].join("");
+    }
+
+    function renderPptPayload(payload) {
+      const fileUrl = outputPathToUrl(payload.file_path);
+      if (!fileUrl) return '<pre style="font-size:12px">' + escapeHtml(JSON.stringify(payload, null, 2)) + '</pre>';
+      return [
+        '<div style="margin-bottom:12px"><strong>Presentation generated.</strong> Slides: ' + escapeHtml(payload.slide_count || "n/a") + '</div>',
+        '<div class="btn-group" style="margin-top:0">',
+        '<a class="btn btn-secondary" href="' + fileUrl + '" target="_blank" style="text-decoration:none;font-size:13px;padding:8px 14px;">Preview</a>',
+        '<a class="btn btn-primary" href="' + fileUrl + '" download style="text-decoration:none;font-size:13px;padding:8px 14px;">Download PPTX</a>',
+        '</div>',
+      ].join("");
+    }
+
+    function stopVideoPolling() { if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; } state.isPolling = false; hideVideoProgress(); }
+
+    async function createVideoJob() {
+      stopVideoPolling();
+      const prompt = String($("videoPrompt") ? $("videoPrompt").value : "").trim();
+      if (!prompt) throw new Error("Video prompt is required.");
+      const seconds = $("videoSeconds") ? $("videoSeconds").value : "4";
+      const size = $("videoSize") ? $("videoSize").value : "1280x720";
+      let referenceImageUrl = $("videoRefImage") ? $("videoRefImage").value.trim() : "";
+
+      /* If user uploaded a file, convert to data URL for backend */
+      const videoFileInput = $("videoRefFile");
+      if (!referenceImageUrl && videoFileInput && videoFileInput.files && videoFileInput.files[0]) {
+        const b64 = await readFileAsBase64(videoFileInput.files[0]);
+        referenceImageUrl = "data:image/png;base64," + b64;
+      }
+
+      /* Step 1: Submit job */
+      showVideoProgress("Submitting video job...", 5);
+      setPanelText("videoOut", "");
+      const body = { prompt, seconds, size };
+      if (referenceImageUrl) body.reference_image_url = referenceImageUrl;
+      const payload = await apiRequest("/media/video", { method: "POST", timeoutMs: 180000, body });
+      const jobId = payload.job_id ? String(payload.job_id) : "";
+      if (!jobId) { hideVideoProgress(); setPanelHtml("videoOut", '<pre style="font-size:12px">' + escapeHtml(JSON.stringify(payload, null, 2)) + '</pre>'); throw new Error("No job_id in response."); }
+
+      /* Step 2: Auto-poll until done */
+      showVideoProgress("Job submitted — waiting for render (" + escapeHtml(jobId.slice(0, 16)) + "...)", 15);
+      state.activeJobId = jobId;
+      state.isPolling = true;
+      let rounds = 0;
+      const maxRounds = 60;
+
+      return new Promise((resolve, reject) => {
+        state.pollTimer = setInterval(async () => {
+          rounds += 1;
+          const pct = Math.min(15 + rounds * 1.4, 95);
+          try {
+            const status_payload = await apiRequest("/media/video/" + encodeURIComponent(jobId), { method: "GET", timeoutMs: 30000 });
+            const status = String(status_payload.status || "").toLowerCase();
+
+            if (status === "completed") {
+              stopVideoPolling();
+              showVideoProgress("Rendering complete!", 100);
+              setTimeout(hideVideoProgress, 800);
+              setPanelHtml("videoOut", renderVideoPayload(status_payload, jobId));
+              refreshHistory().catch(() => {});
+              resolve(status_payload);
+              return;
+            }
+            if (status === "failed" || status === "error") {
+              stopVideoPolling();
+              hideVideoProgress();
+              setPanelHtml("videoOut", renderVideoPayload(status_payload, jobId));
+              reject(new Error("Video generation failed."));
+              return;
+            }
+
+            showVideoProgress("Rendering in progress... (poll " + rounds + "/" + maxRounds + ")", pct);
+          } catch (err) {
+            stopVideoPolling();
+            hideVideoProgress();
+            setPanelText("videoOut", "Polling error: " + (err.message || String(err)));
+            reject(err);
+            return;
+          }
+
+          if (rounds >= maxRounds) {
+            stopVideoPolling();
+            hideVideoProgress();
+            setPanelText("videoOut", "Still rendering after " + maxRounds + " polls (~" + Math.round(maxRounds * 6 / 60) + " min). Refresh the page to check again.");
+            reject(new Error("Timeout waiting for video."));
+          }
+        }, 6000);
+      });
+    }
+
+    /* File upload preview */
+    (function() {
+      const fileInput = $("imageFiles");
+      if (!fileInput) return;
+      fileInput.addEventListener("change", function() {
+        const names = $("imageFileNames");
+        const preview = $("imagePreviewRow");
+        const files = Array.from(fileInput.files || []);
+        if (names) names.textContent = files.length ? files.map(f => f.name).join(", ") : "No files selected";
+        if (preview) {
+          preview.innerHTML = "";
+          files.slice(0, 4).forEach(f => {
+            const url = URL.createObjectURL(f);
+            const img = document.createElement("img");
+            img.src = url; img.style.cssText = "height:64px;border-radius:8px;border:1px solid var(--border);object-fit:cover;";
+            preview.appendChild(img);
+          });
+        }
+      });
+    })();
+
+    /* Video reference image upload preview */
+    (function() {
+      const fileInput = $("videoRefFile");
+      if (!fileInput) return;
+      fileInput.addEventListener("change", function() {
+        const names = $("videoRefFileName");
+        const preview = $("videoRefPreview");
+        const file = fileInput.files && fileInput.files[0];
+        if (names) names.textContent = file ? file.name : "No file selected";
+        if (preview) {
+          preview.innerHTML = "";
+          if (file) {
+            const url = URL.createObjectURL(file);
+            const img = document.createElement("img");
+            img.src = url; img.style.cssText = "height:80px;border-radius:8px;border:1px solid var(--border);object-fit:cover;";
+            preview.appendChild(img);
+          }
+        }
+      });
+    })();
+
+    async function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result;
+          const base64 = result.split(",")[1] || result;
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function createImage() {
+      const prompt = String($("imagePrompt") ? $("imagePrompt").value : "").trim();
+      if (!prompt) throw new Error("Image prompt is required.");
+      const size = $("imageSize") ? $("imageSize").value : "1024x1024";
+      const quality = $("imageQuality") ? $("imageQuality").value : "high";
+      const background = $("imageBackground") ? $("imageBackground").value : "auto";
+      const output_format = $("imageFormat") ? $("imageFormat").value : "png";
+      const imageUrls = [$("imageRef1"), $("imageRef2")]
+        .map(el => el ? el.value.trim() : "")
+        .filter(u => u.length > 0);
+      const fileInput = $("imageFiles");
+      const files = fileInput ? Array.from(fileInput.files || []) : [];
+      const imageDataList = [];
+      for (const f of files.slice(0, 4)) {
+        imageDataList.push(await readFileAsBase64(f));
+      }
+      const body = { prompt, size, quality, background, output_format, style: "professional" };
+      if (imageUrls.length > 0) body.image_urls = imageUrls;
+      if (imageDataList.length > 0) body.image_data = imageDataList;
+      const payload = await apiRequest("/media/image", { method: "POST", timeoutMs: 180000, body });
+      setPanelHtml("imageOut", renderImagePayload(payload));
+      refreshHistory().catch(() => {});
+      return payload;
+    }
+
+    async function createPpt() {
+      const topic = String($("pptTopic") ? $("pptTopic").value : "").trim();
+      if (!topic) throw new Error("PPT topic is required.");
+      const audience = $("pptAudience") ? $("pptAudience").value : "enterprise stakeholders";
+      const style = $("pptStyle") ? $("pptStyle").value : "professional";
+      const slides = $("pptSlides") ? parseInt($("pptSlides").value, 10) : 6;
+      const payload = await apiRequest("/media/ppt", { method: "POST", timeoutMs: 180000, body: { topic, audience, style, slides } });
+      setPanelHtml("pptOut", renderPptPayload(payload));
+      refreshHistory().catch(() => {});
+      return payload;
+    }
+
+    function trimText(v, maxLen) {
+      const s = String(v || "").trim();
+      if (s.length <= maxLen) return s;
+      return s.slice(0, maxLen) + "...";
+    }
+
+    function renderSearchResults(payload) {
+      const items = Array.isArray(payload && payload.results) ? payload.results : [];
+      if (!items.length) {
+        return '<div class="muted">No matches found in internal index. Try domain keywords from your documents, increase Top K, or clear category filter.</div>';
+      }
+      let html = '<div style="margin-bottom:10px;"><strong>Found ' + items.length + ' result(s)</strong> for: ' + escapeHtml(payload.query || "") + '</div>';
+      html += '<div style="display:grid;gap:10px;">';
+      for (let i = 0; i < items.length; i += 1) {
+        const row = items[i] || {};
+        const source = escapeHtml(row.source || "");
+        const sourceLink = source && /^https?:\/\//i.test(source)
+          ? '<a href="' + source + '" target="_blank" rel="noopener">source</a>'
+          : (source ? '<span class="muted">' + source + '</span>' : '<span class="muted">n/a</span>');
+        const caption = row.caption ? trimText(row.caption, 260) : trimText(row.content, 260);
+        const score = Number(row.score || 0).toFixed(4);
+        const reranker = Number(row.reranker_score || 0).toFixed(4);
+        html += '<div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:#fff;">';
+        html += '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">';
+        html += '<div style="font-weight:600;">#' + (i + 1) + ' ' + escapeHtml(row.title || "Untitled") + '</div>';
+        html += '<div style="font-size:12px;color:var(--text-3);white-space:nowrap;">score: ' + score + ' | rerank: ' + reranker + '</div>';
+        html += '</div>';
+        html += '<div style="font-size:12px;color:var(--text-2);margin-top:6px;">category: ' + escapeHtml(row.category || "n/a") + ' | chunk: ' + escapeHtml(row.chunk_id || "n/a") + ' | ' + sourceLink + '</div>';
+        html += '<div style="margin-top:8px;line-height:1.5;">' + escapeHtml(caption) + '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function uniqueCitationItems(items) {
+      const seen = new Set();
+      const out = [];
+      for (const item of (items || [])) {
+        const source = String(item && item.source ? item.source : "").trim();
+        if (!source || seen.has(source)) continue;
+        seen.add(source);
+        out.push({
+          title: String(item && item.title ? item.title : "Untitled"),
+          source,
+        });
+      }
+      return out;
+    }
+
+    function renderCitationBlock(citations) {
+      const items = Array.isArray(citations) ? citations : [];
+      if (!items.length) {
+        return '<div style="margin-top:12px;"><strong>Citations</strong><div class="muted" style="margin-top:6px;">No citations available.</div></div>';
+      }
+      let html = '<div style="margin-top:12px;"><strong>Citations</strong><ol style="margin-top:6px;padding-left:18px;">';
+      for (const c of items) {
+        const src = escapeHtml(c.source || "");
+        const ttl = escapeHtml(c.title || "Untitled");
+        if (/^https?:\/\//i.test(c.source || "")) {
+          html += '<li><a href="' + src + '" target="_blank" rel="noopener">' + ttl + '</a></li>';
+        } else {
+          html += '<li>' + ttl + ' <span class="muted">(' + src + ')</span></li>';
+        }
+      }
+      html += '</ol></div>';
+      return html;
+    }
+
+    async function searchRagDocuments() {
+      const query = String($("ragSearchQuery") ? $("ragSearchQuery").value : "").trim();
+      if (!query) throw new Error("Search query is required.");
+      const scope = String($("ragSearchScope") ? $("ragSearchScope").value : "internal");
+
+      const topK = parseInt($("ragSearchTopK") ? $("ragSearchTopK").value : "5", 10);
+      const category = String($("ragSearchCategory") ? $("ragSearchCategory").value : "").trim();
+      const useVector = !!($("ragUseVector") && $("ragUseVector").checked);
+
+      if (scope === "general") {
+        const payload = await apiRequest("/chat", {
+          method: "POST",
+          timeoutMs: 90000,
+          body: { message: query },
+        });
+        const citations = Array.isArray(payload.citations) ? payload.citations : [];
+        const html = [
+          '<div style="margin-bottom:8px;"><strong>General QA response</strong> (LLM mode)</div>',
+          '<div style="line-height:1.6;">' + escapeHtml(payload.response || "") + '</div>',
+          renderCitationBlock(citations),
+        ].join("");
+        setPanelHtml("ragSearchOut", html);
+        return payload;
+      }
+
+      const body = {
+        query,
+        top_k: Number.isFinite(topK) ? topK : 5,
+        use_vector: useVector,
+      };
+      if (category) body.category = category;
+
+      const payload = await apiRequest("/search", { method: "POST", timeoutMs: 60000, body });
+      const hits = Array.isArray(payload.results) ? payload.results : [];
+
+      if (!hits.length) {
+        setPanelHtml("ragSearchOut", renderSearchResults(payload));
+        return payload;
+      }
+
+      const contextChunks = hits.slice(0, 5).map((r, idx) => {
+        const title = String(r.title || "Untitled");
+        const source = String(r.source || "");
+        const content = String(r.content || r.caption || "").slice(0, 1200);
+        return '[' + (idx + 1) + '] title=' + title + ' | source=' + source + '\n' + content;
+      }).join('\n\n');
+
+      const groundedPrompt = [
+        'Answer the question using ONLY the retrieved internal knowledge below.',
+        'If information is missing, say so clearly.',
+        'Question: ' + query,
+        '',
+        'Retrieved context:',
+        contextChunks,
+      ].join('\n');
+
+      let answerText = '';
+      let citationItems = uniqueCitationItems(hits);
+      try {
+        const answerPayload = await apiRequest('/chat', {
+          method: 'POST',
+          timeoutMs: 90000,
+          body: { message: groundedPrompt },
+        });
+        answerText = String(answerPayload.response || '').trim();
+        if (Array.isArray(answerPayload.citations) && answerPayload.citations.length) {
+          citationItems = answerPayload.citations.map((c) => ({
+            title: String(c.title || c.source || 'Citation'),
+            source: String(c.source || c.url || ''),
+          }));
+        }
+      } catch (_) {
+        answerText = '';
+      }
+
+      const parts = [];
+      if (answerText) {
+        parts.push('<div style="margin-bottom:10px;"><strong>RAG Answer</strong></div>');
+        parts.push('<div style="line-height:1.7;">' + escapeHtml(answerText) + '</div>');
+      }
+      parts.push(renderCitationBlock(citationItems));
+      parts.push('<hr style="border:none;border-top:1px solid var(--border);margin:14px 0;"/>');
+      parts.push('<div style="margin-bottom:8px;"><strong>Retrieved Chunks</strong></div>');
+      parts.push(renderSearchResults(payload));
+      setPanelHtml('ragSearchOut', parts.join(''));
+      return payload;
+    }
+
+    function safeMediaActionLinks(item) {
+      const result = item.result || {};
+      const fileUrl = outputPathToUrl(result.file_path);
+      const jobId = result.job_id ? String(result.job_id) : "";
+      if (fileUrl) return '<a href="' + fileUrl + '" target="_blank">open</a> &middot; <a href="' + fileUrl + '" download>download</a>';
+      if (jobId) return '<a href="/media/video/' + encodeURIComponent(jobId) + '" target="_blank">view job</a>';
+      return "\u2014";
+    }
+
+    async function refreshHistory() {
+      const body = $("historyBody");
+      if (body) body.innerHTML = '<tr><td colspan="5" class="muted">Loading...</td></tr>';
+      const payload = await apiRequest("/media/history?limit=20", { method: "GET", timeoutMs: 30000 });
+      const items = payload.items || [];
+      if (!body) return payload;
+      if (!items.length) { body.innerHTML = '<tr><td colspan="5" class="muted">No media generated yet. Create your first asset above.</td></tr>'; return payload; }
+      body.innerHTML = items.map((item, index) => {
+        const mediaType = escapeHtml(item.media_type || "unknown");
+        const createdAt = escapeHtml(item.created_at || "n/a");
+        const result = item.result || {};
+        const artifact = escapeHtml(result.file_path || result.job_id || "n/a");
+        const actions = safeMediaActionLinks(item);
+        return '<tr><td>' + (index + 1) + '</td><td><span class="badge">' + mediaType + '</span></td><td>' + createdAt + '</td><td class="muted" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' + artifact + '</td><td>' + actions + '</td></tr>';
+      }).join("");
+      return payload;
+    }
+
+    async function downloadAllAssets() {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 120000);
+      try {
+        const response = await fetch("/media/download-all?limit=40", { signal: controller.signal });
+        if (!response.ok) { const txt = await response.text(); throw new Error(txt || "Download failed."); }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = "media-bundle.zip";
+        document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      } catch (err) { if (err && err.name === "AbortError") throw new Error("Download timed out."); throw err; }
+      finally { clearTimeout(timeout); }
+    }
+
+    async function refreshRuntimeStatus() {
+      const box = $("runtimeStatus");
+      if (box) box.textContent = "Checking...";
+      try {
+        await apiRequest("/wake", { method: "POST", timeoutMs: 15000, body: { reason: "page_open" } });
+        const status = await apiRequest("/architecture/status", { method: "GET", timeoutMs: 30000 });
+        const parts = [];
+        ["database", "cache", "storage", "vector_search", "postgres"].forEach((key) => {
+          const info = status[key] || {};
+          parts.push(key.replace("_", " ") + ": " + (info.enabled ? "\u2713" : "\u2014"));
+        });
+        if (box) box.textContent = "Online \u00b7 " + parts.join(" \u00b7 ");
+      } catch (err) { if (box) box.textContent = "Offline: " + (err.message || String(err)); }
+    }
+
+    function customerMetricTile(label, value, hint, tone) {
+      const color = tone === "ok" ? "var(--ok)" : tone === "warn" ? "#e37400" : tone === "err" ? "var(--err)" : "var(--text)";
+      return [
+        '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;">',
+        '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);margin-bottom:6px;">' + escapeHtml(label) + '</div>',
+        '<div style="font-size:20px;font-weight:700;color:' + color + ';">' + escapeHtml(value) + '</div>',
+        '<div style="font-size:12px;color:var(--text-3);margin-top:4px;line-height:1.4;">' + escapeHtml(hint || "") + '</div>',
+        '</div>'
+      ].join("");
+    }
+
+    function metricTrend(previousValue, currentValue, higherIsBetter) {
+      if (previousValue === null || previousValue === undefined) return "■ stable";
+      const prevNum = Number(previousValue);
+      const currNum = Number(currentValue);
+      if (Number.isFinite(prevNum) && Number.isFinite(currNum)) {
+        if (currNum === prevNum) return "■ stable";
+        if (higherIsBetter) return currNum > prevNum ? "▲ up" : "▼ down";
+        return currNum < prevNum ? "▲ up" : "▼ down";
+      }
+      if (String(previousValue) === String(currentValue)) return "■ stable";
+      return "▲ changed";
+    }
+
+    function rankSlo(status) {
+      const s = String(status || "").toLowerCase();
+      if (s.includes("on track")) return 2;
+      if (s.includes("at risk")) return 1;
+      return 0;
+    }
+
+    async function refreshCustomerMetrics() {
+      const panel = $("customerMetricsPanel");
+      const meta = $("customerMetricsMeta");
+      if (panel) panel.innerHTML = '<div class="muted" style="grid-column:1/-1;">Loading customer metrics...</div>';
+
+      const [healthRes, historyRes, slosRes, govRes] = await Promise.allSettled([
+        apiRequest("/health", { method: "GET", timeoutMs: 20000 }),
+        apiRequest("/media/history?limit=100", { method: "GET", timeoutMs: 25000 }),
+        apiRequest("/metrics/slos", { method: "GET", timeoutMs: 20000 }),
+        apiRequest("/governance/status", { method: "GET", timeoutMs: 20000 }),
+      ]);
+
+      const health = healthRes.status === "fulfilled" ? healthRes.value : null;
+      const history = historyRes.status === "fulfilled" ? historyRes.value : null;
+      const slos = slosRes.status === "fulfilled" ? slosRes.value : null;
+      const gov = govRes.status === "fulfilled" ? govRes.value : null;
+
+      const serviceStatus = health && String(health.status || "").toLowerCase() === "healthy" ? "Online" : "Degraded";
+      const serviceTone = serviceStatus === "Online" ? "ok" : "warn";
+
+      const generatedCount = history && typeof history.count === "number" ? history.count : 0;
+      const byType = history && history.items ? history.items.reduce((acc, item) => {
+        const t = item && item.media_type ? String(item.media_type) : "unknown";
+        acc[t] = (acc[t] || 0) + 1;
+        return acc;
+      }, {}) : {};
+      const typeHint = Object.keys(byType).length
+        ? Object.keys(byType).map((k) => k + ':' + byType[k]).join(' · ')
+        : 'No assets yet';
+
+      let sloValue = "Unavailable";
+      let sloTone = "warn";
+      if (slos) {
+        const failed = Number(slos.failed_slos || 0);
+        const overall = String(slos.overall_status || slos.status || "").toLowerCase();
+        if (failed > 0 || overall.includes("fail") || overall.includes("degrad") || overall.includes("warn")) {
+          sloValue = "At Risk";
+          sloTone = "warn";
+        } else {
+          sloValue = "On Track";
+          sloTone = "ok";
+        }
+      }
+
+      const govEnabled = gov && gov.content_safety && gov.pii_filter && gov.audit;
+      const govValue = govEnabled ? "Enabled" : "Partial";
+      const govTone = govEnabled ? "ok" : "warn";
+
+      const prev = state.customerMetricsPrev || {};
+      const serviceTrend = metricTrend(prev.serviceStatus, serviceStatus, true);
+      const deliveryTrend = metricTrend(prev.generatedCount, generatedCount, true);
+      const sloTrend = metricTrend(rankSlo(prev.sloValue), rankSlo(sloValue), true);
+      const trustTrend = metricTrend(prev.govValue, govValue, true);
+
+      if (panel) {
+        panel.innerHTML = [
+          customerMetricTile("Service Availability", serviceStatus, ((health && health.cloud_provider) ? ("Region: " + health.cloud_provider + " · ") : "") + serviceTrend, serviceTone),
+          customerMetricTile("Content Delivery", String(generatedCount), typeHint + ' · ' + deliveryTrend, generatedCount > 0 ? "ok" : "plain"),
+          customerMetricTile("Reliability (SLO)", sloValue, "Customer-facing reliability target · " + sloTrend, sloTone),
+          customerMetricTile("Trust & Compliance", govValue, "Safety + PII + audit controls · " + trustTrend, govTone),
+        ].join("");
+      }
+      if (meta) meta.textContent = "Updated: " + new Date().toLocaleString();
+      state.customerMetricsPrev = { serviceStatus, generatedCount, sloValue, govValue };
+    }
+
+    function bindSafeAction(buttonId, panelId, action, busyText) {
+      const btn = $(buttonId); if (!btn) return;
+      btn.addEventListener("click", async () => {
+        setBusy(btn, true, busyText || "Working...");
+        if (panelId) setPanelText(panelId, "Processing...");
+        try { await action(); }
+        catch (err) { const message = err && err.message ? err.message : String(err); if (panelId) setPanelText(panelId, "Error: " + message); }
+        finally { setBusy(btn, false); }
+      });
+    }
+
+    bindSafeAction("createVideoBtn", "videoOut", createVideoJob, "Generating...");
+    bindSafeAction("imageBtn", "imageOut", createImage, "Generating...");
+    bindSafeAction("pptBtn", "pptOut", createPpt, "Generating...");
+    bindSafeAction("ragSearchBtn", "ragSearchOut", searchRagDocuments, "Searching...");
+    bindSafeAction("refreshHistoryBtn", null, refreshHistory, "Loading...");
+    bindSafeAction("refreshCustomerMetricsBtn", null, refreshCustomerMetrics, "Loading...");
+    bindSafeAction("clearHistoryBtn", null, async () => { if (!confirm("Delete all media history?")) return; await apiRequest("/media/history", { method: "DELETE", timeoutMs: 30000 }); await refreshHistory(); }, "Clearing...");
+    bindSafeAction("downloadAllBtn", null, downloadAllAssets, "Zipping...");
+    bindSafeAction("refreshSystemBtn", null, refreshRuntimeStatus, "Checking...");
+
+    /* --- Governance & Compliance --- */
+    async function refreshGovernance() {
+      const panel = $("governancePanel");
+      const loading = $("governanceLoading");
+      if (loading) loading.textContent = "Loading...";
+      try {
+        const data = await apiRequest("/governance/status", { method: "GET", timeoutMs: 15000 });
+        if (!panel) return;
+        const cs = data.content_safety || {};
+        const pii = data.pii_filter || {};
+        const audit = data.audit || {};
+        const gdpr = data.gdpr || {};
+        const regs = data.regulations || {};
+
+        const statusBadge = (ok) => ok ? '<span class="badge ok">Active</span>' : '<span class="badge warn">Off</span>';
+        const regBadge = (s) => s === "compliant" ? '<span class="badge ok">Compliant</span>' : '<span class="badge warn">' + escapeHtml(s) + '</span>';
+
+        let html = '';
+
+        // Content Safety card
+        html += '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;">';
+        html += '<div style="font-weight:700;margin-bottom:8px;">🛡️ Content Safety</div>';
+        html += '<div style="font-size:13px;color:var(--text-2);line-height:1.8;">';
+        html += 'Local Regex: ' + statusBadge(cs.local_regex) + '<br/>';
+        html += 'Azure AI Content Safety: ' + statusBadge(cs.azure_content_safety) + '<br/>';
+        html += 'Categories: ' + (cs.categories_monitored || []).join(", ") + '<br/>';
+        html += 'Injection Patterns: ' + (cs.injection_patterns || 0) + '<br/>';
+        html += '</div></div>';
+
+        // PII Protection
+        html += '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;">';
+        html += '<div style="font-weight:700;margin-bottom:8px;">🔒 PII Protection</div>';
+        html += '<div style="font-size:13px;color:var(--text-2);line-height:1.8;">';
+        html += 'Status: ' + statusBadge(pii.enabled) + '<br/>';
+        html += 'Patterns: ' + (pii.patterns || []).join(", ") + '<br/>';
+        html += 'Pre-LLM Masking: ' + statusBadge(true) + '<br/>';
+        html += '</div></div>';
+
+        // Audit Trail
+        html += '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;">';
+        html += '<div style="font-weight:700;margin-bottom:8px;">📋 Audit Trail</div>';
+        html += '<div style="font-size:13px;color:var(--text-2);line-height:1.8;">';
+        html += 'Status: ' + statusBadge(audit.enabled) + '<br/>';
+        html += 'Log Entries: ' + (audit.entries || 0) + '<br/>';
+        html += 'Format: JSONL (immutable)<br/>';
+        html += '</div></div>';
+
+        // GDPR Compliance
+        html += '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;">';
+        html += '<div style="font-weight:700;margin-bottom:8px;">🇪🇺 GDPR Compliance</div>';
+        html += '<div style="font-size:13px;color:var(--text-2);line-height:1.8;">';
+        html += 'Right to Access: ' + statusBadge(gdpr.right_to_access) + '<br/>';
+        html += 'Right to Erasure: ' + statusBadge(gdpr.right_to_erasure) + '<br/>';
+        html += 'Data Portability: ' + statusBadge(gdpr.data_portability) + '<br/>';
+        html += 'Retention: ' + (gdpr.data_retention_days || 90) + ' days<br/>';
+        html += '</div></div>';
+
+        // Regulations
+        html += '<div style="grid-column:1/-1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;">';
+        html += '<div style="font-weight:700;margin-bottom:12px;">📜 Regulatory Compliance</div>';
+        html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">';
+        for (const [reg, info] of Object.entries(regs)) {
+          html += '<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">';
+          html += '<div style="font-weight:600;margin-bottom:6px;">' + escapeHtml(reg) + ' ' + regBadge(info.status) + '</div>';
+          html += '<ul style="font-size:12px;color:var(--text-2);margin:0;padding-left:16px;">';
+          for (const c of (info.controls || []).slice(0, 4)) {
+            html += '<li>' + escapeHtml(c) + '</li>';
+          }
+          html += '</ul></div>';
+        }
+        html += '</div></div>';
+
+        // Pipeline
+        html += '<div style="grid-column:1/-1;text-align:center;font-size:12px;color:var(--text-3);padding:8px;">';
+        html += '🔄 Pipeline: ' + escapeHtml(data.pipeline || "N/A");
+        html += '</div>';
+
+        panel.innerHTML = html;
+      } catch (err) {
+        if (panel) panel.innerHTML = '<div class="muted" style="grid-column:1/-1;">Failed to load governance status: ' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    async function runSafetyTest() {
+      const text = $("safetyTestInput") ? $("safetyTestInput").value.trim() : "";
+      if (!text) throw new Error("Enter test text.");
+      const result = await apiRequest("/governance/test-safety", { method: "POST", timeoutMs: 15000, body: { text } });
+      const inp = result.input_screening || {};
+      const pii = result.pii_detection || {};
+      const out = result.output_screening || {};
+      let html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">';
+      html += '<div><strong>Input Screening</strong><br/><span class="badge ' + (inp.level === "safe" ? "ok" : inp.level === "blocked" ? "err" : "warn") + '">' + escapeHtml(inp.level) + '</span><br/><span style="font-size:12px">' + escapeHtml(inp.message) + '</span></div>';
+      html += '<div><strong>PII Detection</strong><br/>' + (pii.found ? '<span class="badge warn">Found ' + pii.count + '</span><br/><span style="font-size:12px">Types: ' + escapeHtml((pii.types || []).join(", ")) + '</span>' : '<span class="badge ok">None</span>');
+      if (pii.masked_preview) html += '<br/><span style="font-size:11px;color:var(--text-3);">Masked: ' + escapeHtml(pii.masked_preview) + '</span>';
+      html += '</div>';
+      html += '<div><strong>Output Screening</strong><br/><span class="badge ' + (out.level === "safe" ? "ok" : out.level === "blocked" ? "err" : "warn") + '">' + escapeHtml(out.level) + '</span><br/><span style="font-size:12px">' + escapeHtml(out.message) + '</span></div>';
+      html += '</div>';
+      setPanelHtml("safetyTestOut", html);
+    }
+
+    bindSafeAction("refreshGovernanceBtn", null, refreshGovernance, "Loading...");
+    bindSafeAction("testSafetyBtn", null, () => {
+      const panel = $("safetyTestPanel");
+      if (panel) panel.style.display = panel.style.display === "none" ? "block" : "none";
+    }, null);
+    bindSafeAction("runSafetyTestBtn", "safetyTestOut", runSafetyTest, "Screening...");
+
+    (async function init() {
+      await refreshRuntimeStatus();
+      await refreshCustomerMetrics().catch(() => {});
+      await refreshGovernance().catch(() => {});
+      await refreshHistory().catch((err) => {
+        const body = $("historyBody");
+        if (body) body.innerHTML = '<tr><td colspan="5" class="muted">History unavailable: ' + escapeHtml(err.message || String(err)) + '</td></tr>';
+      });
+    })();
+  </script>
+</body>
+</html>

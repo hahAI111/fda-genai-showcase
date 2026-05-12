@@ -1,0 +1,100 @@
+name: Container Build and Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      imageTag:
+        description: "Container image tag"
+        required: false
+        default: "latest"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      ACR_NAME: ${{ secrets.ACR_NAME }}
+      IMAGE_NAME: enterprise-genai-content-studio
+      IMAGE_TAG: ${{ github.event.inputs.imageTag || 'latest' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        shell: pwsh
+        run: |
+          $required = @{
+            ACR_NAME = $env:ACR_NAME
+            AZURE_CLIENT_ID = '${{ secrets.AZURE_CLIENT_ID }}'
+            AZURE_TENANT_ID = '${{ secrets.AZURE_TENANT_ID }}'
+            AZURE_SUBSCRIPTION_ID = '${{ secrets.AZURE_SUBSCRIPTION_ID }}'
+          }
+          $missing = @($required.GetEnumerator() | Where-Object { [string]::IsNullOrWhiteSpace($_.Value) } | ForEach-Object { $_.Key })
+          if ($missing.Count -gt 0) {
+            throw "Missing required GitHub secrets: $($missing -join ', ')"
+          }
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push image to ACR
+        run: |
+          az acr build \
+            --registry "$ACR_NAME" \
+            --image "$IMAGE_NAME:$IMAGE_TAG" \
+            .
+
+  deploy-webapp:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      ACR_NAME: ${{ secrets.ACR_NAME }}
+      IMAGE_NAME: enterprise-genai-content-studio
+      IMAGE_TAG: ${{ github.event.inputs.imageTag || 'latest' }}
+      RESOURCE_GROUP: ${{ secrets.WEBAPP_RESOURCE_GROUP }}
+      WEBAPP_NAME: ${{ secrets.WEBAPP_NAME }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        shell: pwsh
+        run: |
+          $required = @{
+            ACR_NAME = $env:ACR_NAME
+            WEBAPP_RESOURCE_GROUP = $env:RESOURCE_GROUP
+            WEBAPP_NAME = $env:WEBAPP_NAME
+            AZURE_CLIENT_ID = '${{ secrets.AZURE_CLIENT_ID }}'
+            AZURE_TENANT_ID = '${{ secrets.AZURE_TENANT_ID }}'
+            AZURE_SUBSCRIPTION_ID = '${{ secrets.AZURE_SUBSCRIPTION_ID }}'
+          }
+          $missing = @($required.GetEnumerator() | Where-Object { [string]::IsNullOrWhiteSpace($_.Value) } | ForEach-Object { $_.Key })
+          if ($missing.Count -gt 0) {
+            throw "Missing required GitHub secrets: $($missing -join ', ')"
+          }
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy container to Web App
+        shell: pwsh
+        run: |
+          ./scripts/deploy_container_webapp.ps1 `
+            -ResourceGroup "$env:RESOURCE_GROUP" `
+            -WebAppName "$env:WEBAPP_NAME" `
+            -AcrName "$env:ACR_NAME" `
+            -ImageName "$env:IMAGE_NAME" `
+            -ImageTag "$env:IMAGE_TAG"

@@ -1,0 +1,46 @@
+name: Healthcare Knowledge Base
+id: healthcare-knowledge
+industry: Healthcare (Hospital Network)
+customer_profile:
+  size: "Regional hospital network, 8 hospitals, 15K staff"
+  team: "2 ML engineers, 1 data scientist, IT department"
+  cloud: "Azure (HIPAA BAA in place)"
+  budget: "$8,000/month"
+
+problem: |
+  Clinical staff spend 30+ minutes searching for drug interactions,
+  treatment protocols, and internal SOPs across 5 different systems.
+  Critical information is scattered across Epic EHR notes, clinical
+  guidelines (UpToDate), pharmacy databases, and internal wikis.
+  Wrong or delayed information can impact patient outcomes.
+
+requirements:
+  - Natural language search across clinical guidelines and SOPs
+  - Drug interaction checking with severity levels
+  - HIPAA compliance (PHI detection and masking)
+  - Integration with Epic EHR (FHIR API)
+  - Response time < 3 seconds for clinical queries
+  - "I don't know" preferred over uncertain answers (patient safety)
+  - Mobile-friendly (clinicians use tablets)
+  - 99.99% uptime (clinical dependency)
+
+constraints:
+  - PHI must never reach the LLM (strict masking required)
+  - All data must stay in US regions (data residency)
+  - Must pass HIPAA security risk assessment
+  - No internet-facing endpoints (internal network only)
+  - Clinician approval required for any new data source
+
+success_metrics:
+  - Information retrieval time < 2 minutes (from 30+ minutes)
+  - Groundedness score > 95% (patient safety critical)
+  - Clinician satisfaction > 4.5/5.0
+  - Zero PHI exposure incidents
+
+expected_architecture:
+  pattern: "rag-enterprise + governance-pipeline (HIPAA-enhanced)"
+  retrieval: "Azure AI Search with private endpoint"
+  generation: "GPT-4.1-mini (Azure, HIPAA BAA covered)"
+  governance: "Enhanced PII/PHI filter + Azure AI Content Safety + audit"
+  special: "FHIR API integration via Azure Health Data Services"
+  estimated_cost: "$5,800/month"
