@@ -782,7 +782,60 @@
         </div>
       </article>
 
-      <!-- Asset History (full width) -->
+      <!-- Agentic Retrieval (full width) -->
+      <article class="card primary">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Agentic Retrieval</h2>
+            <p class="card-subtitle">LLM-powered query planning → parallel multi-source search → structured results with citations.</p>
+          </div>
+          <span class="card-badge" style="background:var(--accent-2);color:#fff;">Agentic</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <!-- Left: How it works -->
+          <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;background:var(--surface-2);">
+            <h3 style="font-size:14px;margin-bottom:12px;">How Agentic Retrieval Works</h3>
+            <div class="output rich" style="margin-top:0;font-size:13px;line-height:1.6;">
+              <div><strong>1.</strong> Your question is sent to gpt-5.2 for <strong>query planning</strong>.</div>
+              <div style="margin-top:6px;"><strong>2.</strong> The LLM decomposes complex questions into <strong>sub-queries</strong>.</div>
+              <div style="margin-top:6px;"><strong>3.</strong> Sub-queries run in <strong>parallel</strong> across multiple knowledge sources:</div>
+              <div style="margin-left:16px;margin-top:4px;">• <code>ks-enterprise-index</code> — Azure AI Search (68 docs)</div>
+              <div style="margin-left:16px;">• <code>ks-enterprise-docs</code> — Azure Blob Storage (28 docs)</div>
+              <div style="margin-top:6px;"><strong>4.</strong> Results are aggregated, deduplicated, and returned with <strong>source citations</strong>.</div>
+              <div style="margin-top:8px;color:var(--text-2);font-size:12px;">vs. Basic Search: Agentic Retrieval adds LLM reasoning on top — better for complex, multi-faceted questions.</div>
+            </div>
+          </div>
+
+          <!-- Right: Query form -->
+          <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;background:var(--surface-2);">
+            <h3 style="font-size:14px;margin-bottom:12px;">Query (Agentic RAG)</h3>
+            <div class="field">
+              <label for="agenticQuery">Question</label>
+              <textarea id="agenticQuery" style="min-height:60px;" placeholder="e.g. Compare RAG vs fine-tuning for regulatory compliance">What is our GDPR compliance framework and how does it relate to data retention?</textarea>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="agenticEffort">Reasoning Effort</label>
+                <select id="agenticEffort">
+                  <option value="low">Low (fast)</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High (thorough)</option>
+                </select>
+              </div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" id="agenticRetrieveBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Retrieve
+              </button>
+            </div>
+            <div class="output" id="agenticOut" style="margin-top:12px;">Results will appear here.</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Customer Service Snapshot (full width) -->
       <article class="card primary">
         <div class="card-header">
           <div>
@@ -1409,6 +1462,80 @@
       return payload;
     }
 
+    /* --- Agentic Retrieval --- */
+    async function agenticRetrieve() {
+      const query = String($("agenticQuery") ? $("agenticQuery").value : "").trim();
+      if (!query) throw new Error("Question is required.");
+      const effort = String($("agenticEffort") ? $("agenticEffort").value : "medium");
+
+      const payload = await apiRequest("/retrieve", {
+        method: "POST",
+        timeoutMs: 120000,
+        body: { query, reasoning_effort: effort },
+      });
+
+      const parts = [];
+
+      /* Execution plan */
+      const plan = payload.execution_plan || {};
+      if (plan.sub_queries && plan.sub_queries.length) {
+        parts.push('<div style="margin-bottom:10px;"><strong>Query Plan</strong> <span style="color:var(--text-3);font-size:12px;">(' + plan.sub_queries.length + ' sub-queries)</span></div>');
+        parts.push('<ol style="margin:0 0 12px 20px;line-height:1.7;">');
+        plan.sub_queries.forEach(function(sq) { parts.push('<li>' + escapeHtml(sq) + '</li>'); });
+        parts.push('</ol>');
+      }
+
+      /* Grounding data */
+      const items = Array.isArray(payload.grounding_data) ? payload.grounding_data : [];
+      if (items.length) {
+        parts.push('<div style="margin-bottom:8px;"><strong>Grounding Data</strong> <span style="color:var(--text-3);font-size:12px;">(' + items.length + ' results)</span></div>');
+        items.forEach(function(item, idx) {
+          const title = escapeHtml(String(item.title || 'Untitled'));
+          const score = item.reranker_score != null ? item.reranker_score : item.score;
+          const scoreStr = score != null ? ' <span style="color:var(--text-3);font-size:12px;">(score: ' + Number(score).toFixed(3) + ')</span>' : '';
+          const content = escapeHtml(String(item.content || '').slice(0, 600));
+          const source = item.source ? ' <a href="' + escapeHtml(String(item.source)) + '" target="_blank" style="font-size:12px;">[source]</a>' : '';
+          parts.push('<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;margin-bottom:8px;background:var(--surface);">');
+          parts.push('<div style="font-weight:600;">[' + (idx + 1) + '] ' + title + scoreStr + source + '</div>');
+          parts.push('<div style="margin-top:4px;font-size:13px;line-height:1.5;color:var(--text-2);">' + content + '</div>');
+          parts.push('</div>');
+        });
+      } else {
+        parts.push('<div class="muted">No results found.</div>');
+      }
+
+      /* Sub-query results */
+      const sqResults = Array.isArray(payload.sub_query_results) ? payload.sub_query_results : [];
+      if (sqResults.length) {
+        parts.push('<hr style="border:none;border-top:1px solid var(--border);margin:14px 0;"/>');
+        parts.push('<div style="margin-bottom:8px;"><strong>Sub-Query Execution</strong></div>');
+        parts.push('<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--border);">');
+        parts.push('<th style="padding:4px 8px;">Sub-Query</th><th style="padding:4px 8px;">Source</th><th style="padding:4px 8px;">Results</th><th style="padding:4px 8px;">Time</th></tr></thead><tbody>');
+        sqResults.forEach(function(sq) {
+          parts.push('<tr style="border-bottom:1px solid var(--surface-3);">');
+          parts.push('<td style="padding:4px 8px;">' + escapeHtml(String(sq.sub_query || '')) + '</td>');
+          parts.push('<td style="padding:4px 8px;">' + escapeHtml(String(sq.source_name || '')) + '</td>');
+          parts.push('<td style="padding:4px 8px;">' + (sq.results_count || 0) + '</td>');
+          parts.push('<td style="padding:4px 8px;">' + (sq.execution_time_ms != null ? sq.execution_time_ms.toFixed(0) + ' ms' : '-') + '</td>');
+          parts.push('</tr>');
+        });
+        parts.push('</tbody></table>');
+      }
+
+      /* Governance */
+      const gov = payload.governance || {};
+      const perf = payload.performance || {};
+      parts.push('<hr style="border:none;border-top:1px solid var(--border);margin:14px 0;"/>');
+      parts.push('<div style="display:flex;gap:16px;font-size:12px;color:var(--text-3);">');
+      parts.push('<span>Latency: ' + (perf.total_latency_ms != null ? perf.total_latency_ms.toFixed(0) + ' ms' : '-') + '</span>');
+      parts.push('<span>Safety: ' + escapeHtml(String((gov.input_safety || {}).level || '-')) + '</span>');
+      parts.push('<span>PII: ' + (gov.pii && gov.pii.detected ? gov.pii.count + ' detected' : 'none') + '</span>');
+      parts.push('</div>');
+
+      setPanelHtml("agenticOut", parts.join(''));
+      return payload;
+    }
+
     function safeMediaActionLinks(item) {
       const result = item.result || {};
       const fileUrl = outputPathToUrl(result.file_path);
@@ -1577,6 +1704,7 @@
     bindSafeAction("imageBtn", "imageOut", createImage, "Generating...");
     bindSafeAction("pptBtn", "pptOut", createPpt, "Generating...");
     bindSafeAction("ragSearchBtn", "ragSearchOut", searchRagDocuments, "Searching...");
+    bindSafeAction("agenticRetrieveBtn", "agenticOut", agenticRetrieve, "Retrieving...");
     bindSafeAction("refreshHistoryBtn", null, refreshHistory, "Loading...");
     bindSafeAction("refreshCustomerMetricsBtn", null, refreshCustomerMetrics, "Loading...");
     bindSafeAction("clearHistoryBtn", null, async () => { if (!confirm("Delete all media history?")) return; await apiRequest("/media/history", { method: "DELETE", timeoutMs: 30000 }); await refreshHistory(); }, "Clearing...");
