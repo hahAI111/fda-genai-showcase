@@ -43,21 +43,21 @@ class Settings(BaseSettings):
     gcp_service_account_key_path: str = ""  # Path to SA JSON key (dev only; prod uses ADC)
 
     # --- Azure (multi-cloud support) ---
-    azure_ai_endpoint: str = "https://gpt522222.services.ai.azure.com"
-    azure_ai_project: str = "proj-default"
-    azure_ai_api_version: str = "2025-01-01-preview"
-    azure_ai_chat_deployment: str = "gpt-4.1-mini"
+    azure_ai_endpoint: str = ""
+    azure_ai_project: str = ""
+    azure_ai_api_version: str = "2026-04-01"
+    azure_ai_chat_deployment: str = "gpt-5.2"
     azure_ai_embedding_deployment: str = "text-embedding-3-large"
     azure_openai_api_key: str = ""
     azure_openai_base_url: str = ""
     azure_ai_image_deployment: str = "gpt-image-2"
     azure_ai_video_deployment: str = "sora-2"
     azure_subscription_id: str = ""
-    azure_resource_group: str = "gpt"
-    azure_search_endpoint: str = "https://search111222.search.windows.net"
+    azure_resource_group: str = ""
+    azure_search_endpoint: str = ""
     azure_search_index: str = "enterprise-knowledge"
     azure_search_api_key: str = ""
-    azure_storage_account_url: str = "https://sora0018586902.blob.core.windows.net"
+    azure_storage_account_url: str = ""
     azure_storage_account_key: str = ""
     azure_storage_container: str = "enterprise-docs"
     # Cosmos DB (database for chat/media records)

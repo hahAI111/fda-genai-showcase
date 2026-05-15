@@ -37,6 +37,7 @@ import hashlib
 import time
 import uuid
 from contextlib import asynccontextmanager
+from dataclasses import asdict  # noqa: F401 — may be used by downstream
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -95,6 +96,15 @@ except Exception as exc:  # pragma: no cover - optional runtime dependency
     AISearchTool = None  # type: ignore[assignment]
 
 try:
+    from src.tools.knowledge_base import KnowledgeBase
+    from src.tools.knowledge_source import KnowledgeSource, KnowledgeSourceType
+except Exception as exc:  # pragma: no cover - optional runtime dependency
+    _OPTIONAL_IMPORT_ERRORS["agentic_retrieval"] = str(exc)
+    KnowledgeBase = None  # type: ignore[assignment]
+    KnowledgeSource = None  # type: ignore[assignment]
+    KnowledgeSourceType = None  # type: ignore[assignment]
+
+try:
     from src.tools.storage import BlobStorageTool
 except Exception as exc:  # pragma: no cover - optional runtime dependency
     _OPTIONAL_IMPORT_ERRORS["blob_storage_tool"] = str(exc)
@@ -125,6 +135,7 @@ guardrail_pipeline: GuardrailPipeline | None = None
 cosmos_store: CosmosStore | None = None
 redis_cache: RedisCache | None = None
 postgres_store: PostgresStore | None = None
+knowledge_base: KnowledgeBase | None = None
 last_activity_epoch: float = time.time()
 service_soft_stopped: bool = False
 idle_watchdog_task: asyncio.Task | None = None
@@ -317,7 +328,7 @@ async def lifespan(app: FastAPI):
     global orchestrator, hierarchical_orchestrator, eval_pipeline, content_safety
     global pii_filter, audit_logger, skill_registry, search_tool, storage_tool
     global metrics_collector, feedback_collector, media_agent, guardrail_pipeline
-    global cosmos_store, redis_cache, postgres_store
+    global cosmos_store, redis_cache, postgres_store, knowledge_base
     global idle_watchdog_task
 
     setup_logging()
@@ -384,6 +395,38 @@ async def lifespan(app: FastAPI):
         search_tool = None
         storage_tool = None
         logger.error("platform.azure_tools_failed", error=str(e))
+    
+    # Initialize Agentic Retrieval (Knowledge Base)
+    knowledge_base = None
+    if KnowledgeBase is not None and settings.azure_search_endpoint:
+        try:
+            # Prefer identity-based auth over API key
+            search_credential = None
+            if not settings.azure_search_api_key:
+                from src.config import get_credential
+                search_credential = get_credential()
+            knowledge_base = KnowledgeBase(
+                search_endpoint=settings.azure_search_endpoint,
+                search_api_key=settings.azure_search_api_key or "",
+                kb_name="kb-enterprise",
+                credential=search_credential,
+            )
+            # Register knowledge source references (match server-side names)
+            knowledge_base.register_source(
+                KnowledgeSource.from_search_index(name="ks-enterprise-index")
+            )
+            knowledge_base.register_source(
+                KnowledgeSource.from_azure_blob(name="ks-enterprise-docs")
+            )
+            logger.info(
+                "platform.agentic_retrieval",
+                status="initialized",
+                kb_name="kb-enterprise",
+                sources=len(knowledge_base.source_manager.list_sources()),
+            )
+        except Exception as e:
+            knowledge_base = None
+            logger.error("platform.agentic_retrieval_failed", error=str(e))
 
     # Initialize skills registry
     skill_registry = SkillRegistry()
@@ -548,6 +591,29 @@ class ChatResponse(BaseModel):
     llm_metrics: dict | None = None
     react_traces: dict | None = None
     delegation: dict | None = None
+
+
+class RetrieveRequest(BaseModel):
+    """Request model for Agentic Retrieval endpoint"""
+    query: str = Field(..., min_length=1, max_length=2000)
+    conversation_id: str | None = None
+    user_id: str | None = None
+    tenant_id: str | None = None
+    reasoning_effort: str = Field(default="medium")  # "low", "medium", "high"
+
+
+class RetrieveResponse(BaseModel):
+    """Response model for Agentic Retrieval endpoint"""
+    query: str
+    grounding_data: list[dict]
+    source_citations: list[dict]
+    execution_plan: dict
+    sub_query_results: list[dict]
+    synthesis: str | None = None
+    conversation_id: str
+    governance: dict | None = None
+    performance: dict | None = None
+    latency_ms: float | None = None
 
 
 class HealthResponse(BaseModel):
@@ -1090,6 +1156,168 @@ async def chat(request: ChatRequest):
             except Exception as exc:
                 logger.warning("chat.cache_store_failed", error=str(exc))
 
+        return response_payload
+
+
+@app.post("/retrieve", response_model=RetrieveResponse)
+async def retrieve(request: RetrieveRequest):
+    """Agentic Retrieval endpoint with multi-source parallel query execution.
+    
+    Flow:
+    1. Content Safety -> screen input
+    2. PII Filter -> mask sensitive data
+    3. Knowledge Base -> query planning + parallel search + aggregation
+    4. Content Safety -> screen outputs
+    5. Audit -> log for compliance
+    
+    Returns:
+        Structured result: grounding_data + source_citations + execution_plan + sub_query_results
+    """
+    tracer = get_tracer()
+    start = time.perf_counter()
+    _ensure_chat_runtime_ready()
+    
+    if knowledge_base is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Agentic Retrieval service not initialized"
+        )
+    
+    with tracer.start_as_current_span("retrieve_request") as span:
+        context = AgentContext(
+            user_id=request.user_id,
+            tenant_id=request.tenant_id,
+        )
+        if request.conversation_id:
+            context.conversation_id = request.conversation_id
+        else:
+            context.conversation_id = str(uuid.uuid4())
+        
+        span.set_attribute("conversation_id", context.conversation_id)
+        governance_report: dict = {}
+        
+        # 1. Content Safety - Input Screening
+        safety_result = content_safety.screen_input(request.query)
+        governance_report["input_safety"] = {
+            "level": safety_result.level.value,
+            "flags": safety_result.flags,
+        }
+        
+        if safety_result.level == SafetyLevel.BLOCKED:
+            audit_logger.log_governance_action(
+                conversation_id=context.conversation_id,
+                action="retrieve_input_blocked",
+                details={"reason": safety_result.message, "flags": safety_result.flags},
+            )
+            raise HTTPException(status_code=400, detail=safety_result.message)
+        
+        # 2. PII Filter - Mask sensitive data
+        masked_query, pii_detections = pii_filter.mask(request.query)
+        governance_report["pii"] = {
+            "detected": bool(pii_detections),
+            "types": list({d.type for d in pii_detections}),
+            "count": len(pii_detections),
+        }
+        
+        if pii_detections:
+            logger.info(
+                "retrieve.pii_masked",
+                conversation_id=context.conversation_id,
+                count=len(pii_detections),
+                types=governance_report["pii"]["types"],
+            )
+        
+        # 3. Audit - Log the retrieval query
+        audit_logger.log_query(
+            conversation_id=context.conversation_id,
+            query=masked_query,
+            user_id=request.user_id,
+            tenant_id=request.tenant_id,
+        )
+        
+        # 4. Knowledge Base - Agentic Retrieval
+        try:
+            retrieve_result = await knowledge_base.retrieve_and_plan(
+                query=masked_query,
+                conversation_id=context.conversation_id,
+                reasoning_effort=request.reasoning_effort,
+            )
+        except Exception as e:
+            logger.exception(
+                "retrieve.kb_failed",
+                conversation_id=context.conversation_id,
+                error=str(e),
+            )
+            audit_logger.log_governance_action(
+                conversation_id=context.conversation_id,
+                action="retrieve_failed",
+                details={"error": str(e)},
+            )
+            raise HTTPException(status_code=500, detail="Failed to execute retrieval.") from e
+        
+        # 5. Content Safety - Screen grounding data
+        for item in retrieve_result.grounding_data:
+            content = item.get("content", "")
+            if content:
+                output_safety = content_safety.screen_output(content)
+                if output_safety.level == SafetyLevel.BLOCKED:
+                    item["_safety_filtered"] = True
+                    item["content"] = "[Content filtered due to safety policy]"
+        
+        governance_report["output_safety"] = {
+            "level": "mixed",
+            "items_screened": len(retrieve_result.grounding_data),
+        }
+        
+        # 6. Audit - Log the retrieval response
+        total_latency = (time.perf_counter() - start) * 1000
+        audit_logger.log_response(
+            conversation_id=context.conversation_id,
+            agent_name="agentic_retrieval",
+            response=f"Retrieval completed: {len(retrieve_result.grounding_data)} items",
+            token_usage={"total_tokens": 0},  # Agentic Retrieval uses different metrics
+            latency_ms=total_latency,
+            governance=governance_report,
+        )
+        
+        # Build response
+        response_payload = RetrieveResponse(
+            query=request.query,
+            grounding_data=retrieve_result.grounding_data,
+            source_citations=retrieve_result.source_citations,
+            execution_plan=retrieve_result.execution_plan,
+            sub_query_results=retrieve_result.sub_query_results,
+            synthesis=retrieve_result.synthesis,
+            conversation_id=context.conversation_id,
+            governance=governance_report,
+            performance={
+                "total_latency_ms": round(total_latency, 2),
+                "items_retrieved": len(retrieve_result.grounding_data),
+                "activities": len(retrieve_result.activities),
+            },
+            latency_ms=round(total_latency, 2),
+        )
+        
+        if postgres_store is not None:
+            try:
+                postgres_store.add_event(
+                    event_type="retrieve_response",
+                    payload={
+                        "conversation_id": context.conversation_id,
+                        "items_retrieved": len(retrieve_result.grounding_data),
+                        "sub_queries": len(retrieve_result.execution_plan.sub_queries),
+                    },
+                )
+            except Exception as exc:
+                logger.warning("retrieve.postgres_event_failed", error=str(exc))
+        
+        logger.info(
+            "retrieve.complete",
+            conversation_id=context.conversation_id,
+            items=len(retrieve_result.grounding_data),
+            latency_ms=total_latency,
+        )
+        
         return response_payload
 
 

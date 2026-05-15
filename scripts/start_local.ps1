@@ -1,7 +1,7 @@
 param(
     [int]$PreferredPort = 8000,
     [int]$MaxPort = 8010,
-    [string]$Host = "127.0.0.1",
+    [string]$HostAddress = "127.0.0.1",
     [string]$PythonExe = ".\.venv\Scripts\python.exe"
 )
 
@@ -47,7 +47,8 @@ if (-not $selectedPort) {
     throw "No free port found in range $PreferredPort-$MaxPort"
 }
 
-Write-Host "Starting app on http://$Host:$selectedPort"
-Write-Host "Command: $PythonExe -m uvicorn src.main:app --host $Host --port $selectedPort"
+$Hostname = "localhost"
+Write-Host "Starting app on http://${Hostname}:$selectedPort"
+Write-Host "Command: $PythonExe -m uvicorn src.main:app --host $Hostname --port $selectedPort"
 
-& $PythonExe -m uvicorn src.main:app --host $Host --port $selectedPort
+& $PythonExe -m uvicorn src.main:app --host $Hostname --port $selectedPort

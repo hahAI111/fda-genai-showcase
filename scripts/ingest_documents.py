@@ -19,13 +19,31 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 from azure.search.documents import SearchClient
+from openai import AzureOpenAI
 
 from src.config import get_search_credential, get_settings
 from src.tools.storage import BlobStorageTool
+
+
+def _get_embedding_client() -> AzureOpenAI:
+    """Create Azure OpenAI client for embeddings."""
+    settings = get_settings()
+    return AzureOpenAI(
+        azure_endpoint=settings.azure_ai_endpoint,
+        api_key=settings.azure_openai_api_key,
+        api_version="2024-06-01",
+    )
+
+
+def get_embeddings_batch(client: AzureOpenAI, texts: list[str]) -> list[list[float]]:
+    """Get embeddings for a batch of texts (max ~16 at a time)."""
+    resp = client.embeddings.create(input=texts, model="text-embedding-3-large")
+    return [item.embedding for item in resp.data]
 
 
 def chunk_text(
@@ -130,8 +148,21 @@ def ingest_directory(source_dir: Path):
                 "category": _infer_category(file_path),
                 "chunk_id": f"{file_path.stem}_{idx}",
                 "created_at": datetime.now(timezone.utc).isoformat(),
-                # content_vector is generated automatically by integrated vectorization
             })
+
+    # Step 2b: Compute embeddings for all chunks
+    print(f"\n=== Step 2b: Computing embeddings ({len(documents)} chunks) ===")
+    embed_client = _get_embedding_client()
+    embed_batch_size = 16
+    for i in range(0, len(documents), embed_batch_size):
+        batch = documents[i : i + embed_batch_size]
+        texts = [doc["content"] for doc in batch]
+        vectors = get_embeddings_batch(embed_client, texts)
+        for doc, vec in zip(batch, vectors):
+            doc["content_vector"] = vec
+        print(f"  Embedded {i + len(batch)}/{len(documents)}")
+        if i + embed_batch_size < len(documents):
+            time.sleep(0.5)  # rate limit safety
 
     if not documents:
         print("  No documents found to ingest.")

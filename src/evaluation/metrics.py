@@ -14,9 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from openai import AsyncAzureOpenAI
-
-from src.config import get_settings, get_token_provider
+from src.config import get_settings
 
 
 @dataclass
@@ -104,12 +102,8 @@ class EvalMetrics:
 
     def _get_client(self) -> AsyncAzureOpenAI:
         if self._client is None:
-            settings = get_settings()
-            self._client = AsyncAzureOpenAI(
-                azure_endpoint=settings.azure_ai_endpoint,
-                azure_ad_token_provider=get_token_provider(),
-                api_version=settings.azure_ai_api_version,
-            )
+            from src.config import get_azure_openai_client
+            self._client = get_azure_openai_client()
         return self._client
 
     async def _judge(self, prompt: str) -> dict:
