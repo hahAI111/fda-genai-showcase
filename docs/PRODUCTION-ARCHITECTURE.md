@@ -54,7 +54,8 @@ Responsibilities:
 ### 3.4 Data Service Layer
 
 Responsibilities:
-- retrieval and rerank
+- retrieval and rerank (hybrid search via Azure AI Search)
+- Agentic Retrieval: LLM query planning + parallel multi-source search (`POST /retrieve`)
 - persistent history and event records
 - cache acceleration and controlled invalidation
 

@@ -63,6 +63,8 @@ Client (Web UI / API / CLI)
 | Service | Responsibility | Module |
 |---|---|---|
 | AI Search | hybrid retrieval, vector search, semantic rerank | `src/tools/search.py` |
+| Knowledge Base | Agentic Retrieval: LLM query planning + multi-source parallel search | `src/tools/knowledge_base.py` |
+| Knowledge Source | knowledge source definitions (searchIndex, azureBlob, OneLake, SharePoint, Web) | `src/tools/knowledge_source.py` |
 | Blob Storage | document and artifact persistence | `src/tools/storage.py` |
 | Cosmos Store | conversation/media/evaluation persistence | `src/tools/cosmos_store.py` |
 | Redis Cache | hot-path cache and app key management | `src/tools/redis_cache.py` |
@@ -76,10 +78,11 @@ Client (Web UI / API / CLI)
 - grounded retrieval with citations
 - ReAct traces for explainable reasoning
 - hierarchical delegation for multi-step objectives
+- Agentic Retrieval: LLM-driven query planning, parallel multi-source search, structured results with citations
 
 2. Media workflows
-- image generation with style and format controls
-- async video lifecycle (create, status, stream)
+- image generation with multi-reference support, format/quality/background controls
+- async video lifecycle (create, status, stream) with reference image support
 - PPT generation with audience/style/slide controls
 
 3. Governance workflows
@@ -93,6 +96,24 @@ Client (Web UI / API / CLI)
 - runtime readiness endpoints
 - LLM-native metrics and SLO checks
 - friction detection to feature request pipeline
+- customer service snapshot (4 business-level metric tiles with trend tracking)
+- interactive safety testing (PII/injection live screening via `/governance/test-safety`)
+- media asset history with bulk download (ZIP) and clear operations
+- observability dashboard (6-endpoint summary cards, configurable thresholds, auto-refresh)
+
+5. Web UI features
+- Customer Home (`/`): 8-section single-page app
+  - Video Generation (sora-2, reference image, progress polling)
+  - Image Generation (gpt-image-2, multi-reference, format/quality/background)
+  - Presentation Builder (GPT → python-pptx, audience/style selection)
+  - Internal Knowledge Search (hybrid RAG, scope toggle Internal/General, vector toggle)
+  - Agentic Retrieval (LLM query planning, reasoning effort, execution plan display)
+  - Customer Service Snapshot (availability, delivery, SLO, trust tiles)
+  - Asset History (table, download/delete, bulk ZIP)
+  - Governance & Compliance (5 sub-panels + interactive safety test)
+- Internal Console (`/internal`): 4-card debug dashboard
+  - Chat, Search, Media Check, Observability (6 endpoints, auto-refresh, thresholds)
+- Info Overlays: Health, Architecture, API Console (12 endpoint quick links)
 
 ## 6. Security Architecture
 

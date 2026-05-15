@@ -598,6 +598,36 @@ Each module entry includes:
 - **Dependencies**: `sqlalchemy`, `psycopg2`
 - **Ownership**: Data and infrastructure team
 
+#### src/tools/knowledge_base.py
+- **Purpose**: Agentic Retrieval client — LLM-driven query planning + parallel multi-source search
+- **Service Layer**: Agentic Retrieval
+- **Key Classes**:
+  - `KnowledgeBase`: Manages knowledge sources, coordinates retrieval
+- **Key Functions**:
+  - `register_source(source)`: Register a knowledge source
+  - `retrieve_and_plan(query, conversation_id, reasoning_effort)`: Execute Agentic Retrieval
+- **API Integration**: Calls Azure AI Search Agentic Retrieval REST API (`/knowledgebases/{name}/retrieve`)
+- **Reasoning Effort**: `low` (fast), `medium` (balanced), `high` (thorough query decomposition)
+- **Output**: `RetrieveResult` with grounding_data, source_citations, execution_plan, sub_query_results, activities
+- **Dependencies**: `httpx`, `src.config`
+- **Ownership**: Platform backend team
+
+#### src/tools/knowledge_source.py
+- **Purpose**: Knowledge source definitions for Agentic Retrieval
+- **Service Layer**: Agentic Retrieval configuration
+- **Key Classes**:
+  - `KnowledgeSource`: Source configuration (name, type, endpoint, credentials)
+  - `KnowledgeSourceType`: Enum of supported types
+- **Supported Source Types**:
+  - `searchIndex`: Azure AI Search index
+  - `azureBlob`: Azure Blob Storage (auto-creates index + indexer + skillset)
+  - `indexedOneLake`: Fabric Lakehouse
+  - `indexedSharePoint` / `remoteSharePoint`: SharePoint Online
+  - `web`: Bing web search
+- **Factory Methods**: `from_search_index()`, `from_blob_storage()`, `web_source()`
+- **Dependencies**: None (pure data class)
+- **Ownership**: Platform backend team
+
 #### src/tools/redis_cache.py
 - **Purpose**: Redis cache for hot data (session state, embeddings, counters)
 - **Service Layer**: Redis cache
@@ -991,16 +1021,32 @@ Output safety check + metrics recording + audit logging
   - `admin_dashboard.html`: Admin-only operations (index management, user deletion)
 
 #### src/web/customer_home.html
-- **Purpose**: Customer-facing UI for all major features
+- **Purpose**: Customer-facing single-page application (Enterprise Content Studio)
 - **Sections**:
-  1. **Chat and Conversation**: Input for `/chat`, display response with reasoning trace
-  2. **Internal Knowledge Search**: Input for `/search`, display results with citations and rerank scores
-  3. **Media Generation**: Forms for `/media/image`, `/media/video`, `/media/ppt` with status polling
-  4. **Governance Status**: Display governance checks, policy violations, audit trail access
-  5. **Metrics Dashboard**: Cost, SLO status, quality signals
-  6. **Feedback Panel**: Friction reporting, feature request viewing
-- **Dependencies**: No framework (vanilla JS); calls `/api/*` endpoints
+  1. **Video Generation**: Prompt, duration (4/8/12s), resolution, reference image upload/URL, progress polling → `POST /media/video`, `GET /media/video/{id}`
+  2. **Image Generation**: Prompt, size/quality/format/background, multi-reference image upload (file + 2 URLs) → `POST /media/image`
+  3. **Presentation Builder**: Topic, audience (5 options), style, slide count → PPTX download → `POST /media/ppt`
+  4. **Internal Knowledge Search**: Hybrid RAG search, scope toggle (Internal Knowledge / General QA), Top K, category filter, vector toggle → `POST /search` + `POST /chat` (for RAG answer synthesis)
+  5. **Agentic Retrieval**: LLM query planning, reasoning effort selector (low/medium/high), displays execution plan, grounding data with scores, sub-query execution table, governance info → `POST /retrieve`
+  6. **Customer Service Snapshot**: 4 business metric tiles (Service Availability, Content Delivery, Reliability SLO, Trust & Compliance) with trend arrows → parallel `GET /health`, `/media/history`, `/metrics/slos`, `/governance/status`
+  7. **Asset History**: Media table with type/created/artifact columns, open/download per item, Clear All (`DELETE /media/history`), Download All as ZIP (`GET /media/download-all`)
+  8. **Governance & Compliance**: 5 sub-panels (Content Safety, PII Protection, Audit Trail, GDPR, Regulatory) + interactive safety test textarea with PII/injection examples → `GET /governance/status`, `POST /governance/test-safety`
+- **Navigation Overlays**:
+  - **Health**: System status, agents, stores, governance toggles, capabilities → `GET /health`
+  - **Architecture**: Data store connections with doc counts → `GET /architecture/status`
+  - **API Console**: Grid of 12 clickable endpoint links (Swagger, Health, Architecture, Governance, Analytics, Skills, Eval, Metrics, SLO, Feedback, Feature Requests, Storage)
+- **Dependencies**: No framework (vanilla JS); uses `fetch()` with abort controller timeouts
 - **Ownership**: Frontend and UX team
+
+#### src/web/internal_console.html
+- **Purpose**: Engineering debug console for internal testing and observability
+- **Sections**:
+  1. **Chat**: Raw chat testing with JSON output → `POST /chat`
+  2. **Search**: Direct search testing → `POST /search`
+  3. **Media Check**: Quick image/video/PPT generation → `POST /media/*`
+  4. **Observability**: 6-endpoint dashboard with configurable thresholds (SLO fail, friction warn), auto-refresh (30s toggle), severity-based sorting, localStorage persistence → `GET /metrics`, `/metrics/slos`, `/metrics/models`, `/eval/stats`, `/feedback/friction`, `/delegation/stats`
+- **Dependencies**: No framework (vanilla JS)
+- **Ownership**: Platform engineering team
 
 ---
 

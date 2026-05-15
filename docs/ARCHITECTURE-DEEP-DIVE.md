@@ -243,6 +243,54 @@ Query: "What is our PII handling policy?"
         Top-K results (default: 5)
 ```
 
+### Agentic Retrieval Pipeline
+
+Agentic Retrieval (`POST /retrieve`) adds LLM-driven query planning on top of hybrid search.
+Compared to basic `/search`, it decomposes complex questions, searches multiple sources in parallel, and returns structured results.
+
+```
+User Query: "Compare RAG vs fine-tuning for regulatory compliance"
+    │
+    ├── 1. Content Safety → screen input
+    ├── 2. PII Filter → mask sensitive data
+    │
+    ├── 3. Knowledge Base (gpt-5.2 query planning)
+    │   ├── Sub-query 1: "RAG architecture benefits compliance" → [ks-enterprise-index, ks-enterprise-docs]
+    │   ├── Sub-query 2: "Fine-tuning regulatory documents"     → [ks-enterprise-index, ks-enterprise-docs]
+    │   └── Sub-query 3: "Compliance requirements AI systems"   → [ks-enterprise-index, ks-enterprise-docs]
+    │                                       (all parallel)
+    ├── 4. Aggregation + deduplication
+    ├── 5. Content Safety → screen outputs
+    ├── 6. Audit Logger → compliance logging
+    │
+    ▼
+    RetrieveResponse {
+      grounding_data: [{title, content, source, score, reranker_score}],
+      source_citations: [{index, title, source_url, sources}],
+      execution_plan: {user_query, sub_queries, sources, planned_at},
+      sub_query_results: [{sub_query, source_name, results_count, execution_time_ms}],
+      governance: {input_safety, pii, output_safety},
+      performance: {total_latency_ms, items_retrieved, activities}
+    }
+```
+
+**Key differences from `/search`:**
+
+| Aspect | `/search` (Basic RAG) | `/retrieve` (Agentic) |
+|--------|----------------------|----------------------|
+| Query handling | Direct single query | LLM decomposes into sub-queries |
+| Data sources | 1 index | 2+ sources in parallel |
+| Scoring | 0.01-0.02 range | 1.9-2.4 range (reranker) |
+| Latency | ~200ms | ~2000ms |
+| Best for | Simple, direct questions | Complex, multi-faceted questions |
+
+**Knowledge Sources (current):**
+
+| Source | Type | Description |
+|--------|------|-------------|
+| `ks-enterprise-index` | searchIndex | Points to `enterprise-knowledge` index (68 docs) |
+| `ks-enterprise-docs` | azureBlob | Auto-indexes `enterprise-docs` blob container (28 docs) |
+
 ---
 
 ## 5. Skill System (Dual Architecture)
@@ -585,6 +633,8 @@ Layer 2: Distributed Tracing (OpenTelemetry)
 
 ## 13. Data Flow: End-to-End Request
 
+### Chat Flow
+
 `POST /chat {"message": "What is our AI governance policy for PII?"}`
 
 ```
@@ -605,6 +655,25 @@ Layer 2: Distributed Tracing (OpenTelemetry)
 11. EvaluationPipeline.maybe_evaluate() → 10% chance
 12. AuditLogger.log_response()
 13. Return ChatResponse with citations, governance, metrics, react_traces
+```
+
+### Agentic Retrieval Flow
+
+`POST /retrieve {"query": "How does GDPR compliance relate to data retention?", "reasoning_effort": "medium"}`
+
+```
+ 1. FastAPI receives request
+ 2. ContentSafety.screen_input() → SAFE
+ 3. PIIFilter.mask() → no PII detected
+ 4. AuditLogger.log_query()
+ 5. KnowledgeBase.retrieve_and_plan():
+    a. POST to Azure AI Search Agentic Retrieval API
+    b. LLM (gpt-5.2) plans sub-queries
+    c. Parallel search across ks-enterprise-index + ks-enterprise-docs
+    d. 3 activities, 7 grounding results returned
+ 6. ContentSafety.screen_output() for each grounding item
+ 7. AuditLogger.log_response()
+ 8. Return RetrieveResponse with grounding_data, citations, execution_plan, governance
 ```
 
 ---
